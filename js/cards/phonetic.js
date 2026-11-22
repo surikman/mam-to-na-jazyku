@@ -1,0 +1,86 @@
+// 🔊 Fonetické — Fráza, ktorá nahlas a rýchlo za sebou znie ako známy pojem.
+// Polia karty: c = kategória (id z js/config.js), p = text na karte, h = nápoveda, a = správna odpoveď.
+// Voliteľné: ty = viac typov naraz, napr. ["fon","pre"]; lg = jazyk odpovede "sk" / "orig" (inak sa odhadne).
+// Pozor: p slúži aj ako ID karty — po zmene p sa stratia úpravy, ktoré si hráč ku karte uložil v aplikácii.
+GAME.addCards("fon", [
+
+  // 🎬 Filmy, seriály a postavy
+  {c:"film", p:"Ďura, syr, párky!", h:"Výkrik na Juraja, aby si vzal raňajky.", a:"Jurassic Park"},
+  {c:"film", p:"Dedo pľul", h:"Konštatovanie o neslušnom dedkovi.", a:"Deadpool"},
+  {c:"film", p:"Chorý pot, hej?", h:"Keď niekto na tréningu znie a vyzerá veľmi zle.", a:"Harry Potter"},
+  {c:"film", p:"Starý voz", h:"Ojazdené auto.", a:"Star Wars"},
+  {c:"film", p:"Z Kuby, dnu!", h:"Pokyn na colnici pre tovar z Havany.", a:"Scooby-Doo"},
+  {c:"film", p:"Termín na to", h:"Keď si musíš nájsť čas v kalendári.", a:"Terminátor"},
+  {c:"film", p:"Gejm, ov trón!", h:"Trón, ktorý patrí hráčovi videohier.", a:"Game of Thrones"},
+  {c:"film", p:"Doktor, hú!", h:"Lekár, ktorý húka ako sova.", a:"Doctor Who"},
+  {c:"film", ty:["fon","pre"], p:"Staré gate!", h:"Stará brána, napoly po slovensky a napoly po anglicky.", a:"Stargate"},
+  {c:"film", p:"Ex, men!", h:"Takto sa hovorí bývalým mužom.", a:"X-Men"},
+  {c:"film", p:"Kasa, de, papel!", h:"Pokladňa z papiera.", a:"La Casa de Papel"},
+  {c:"film", p:"Inšpekcia!", h:"Kontrola, ktorú robí inšpektor.", a:"Inception"},
+  {c:"film", p:"Vy, plaš!", h:"Rozkaz, aby si niekoho vyplašil.", a:"Whiplash"},
+
+  // 🌟 Známe osobnosti
+  {c:"osob", p:"Brat pýta", h:"Keď súrodenec žiada peniaze.", a:"Brad Pitt"},
+  {c:"osob", p:"Brus, vylis!", h:"Rozkaz v dielni – najprv to zbrús a potom vylisuj.", a:"Bruce Willis"},
+  {c:"osob", p:"Kde, tie, pery?", h:"Znepokojená otázka plastického chirurga.", a:"Katy Perry"},
+  {c:"osob", p:"Maj kel, džem, sen!", h:"Bizarné ranné prianie.", a:"Michael Jackson"},
+  {c:"osob", p:"Lej, ty, gága!", h:"Keď kážeš nalievať, kým ti do toho gága hus.", a:"Lady Gaga"},
+  {c:"osob", p:"Šak, noríš!", h:"Hovorové povzbudenie pre potápača.", a:"Chuck Norris"},
+  {c:"osob", p:"Jed, šírim!", h:"Zloduch v komikse oznamuje svoj plán.", a:"Ed Sheeran"},
+  {c:"osob", p:"Mrak, cukor, breh!", h:"Náhodný zhluk slov o počasí a sladkostiach pri vode.", a:"Mark Zuckerberg"},
+  {c:"osob", p:"Tom, krúž!", h:"Rozkaz Tomovi, aby krúžil dookola.", a:"Tom Cruise"},
+  {c:"osob", p:"Džim, kari!", h:"Džim varí indické korenie.", a:"Jim Carrey"},
+  {c:"osob", p:"Dávid, bek, kam?", h:"Otázka na obrancu Dávida, kam to ide.", a:"David Beckham"},
+  {c:"osob", p:"Margo, robí!", h:"Konštatovanie, že Margo niečo robí.", a:"Margot Robbie"},
+  {c:"osob", p:"Džejson, štátem!", h:"Džejson vládne celým štátom.", a:"Jason Statham"},
+  {c:"osob", p:"Vin, dízl!", h:"Víno zmiešané s naftou.", a:"Vin Diesel"},
+  {c:"osob", p:"Húpi, gold, berg!", h:"Skákanie na zlatom kopci.", a:"Whoopi Goldberg"},
+  {c:"osob", p:"Hjú, grant!", h:"Výkrik prekvapenia a finančná podpora.", a:"Hugh Grant"},
+  {c:"osob", p:"Kris, rok!", h:"Dýka, ktorá trvá celý rok.", a:"Chris Rock"},
+  {c:"osob", p:"Džoni, keš!", h:"Džoni platí v hotovosti.", a:"Johnny Cash"},
+  {c:"osob", p:"Ema, stoň!", h:"Rozkaz Eme, aby hlasno stonala.", a:"Emma Stone"},
+
+  // 🏷️ Značky a technológie
+  {c:"znac", p:"Iný sto gram", h:"Keď si v lahôdkach pýtaš inú salámu.", a:"Instagram"},
+  {c:"znac", p:"Juj, dub!", h:"Zľaknutie sa stromu v lese.", a:"YouTube"},
+  {c:"znac", p:"Voz, cap!", h:"Absurdný prepravný prostriedok na dedine.", a:"WhatsApp"},
+  {c:"znac", p:"Vôl, ti, znie!", h:"Gazda upozorňuje na zvuky z maštale.", a:"Walt Disney"},
+  {c:"znac", p:"Blud, tu!", h:"Konštatovanie, že niekto hovorí nezmysel.", a:"Bluetooth"},
+  {c:"znac", p:"Rieď, bôľ!", h:"Archaická rada z lekárne.", a:"Red Bull"},
+  {c:"znac", p:"To je tá!", h:"Nadšené zvolanie, keď nájdeš správnu vec.", a:"Toyota"},
+  {c:"znac", p:"Bu, gaťi!", h:"Strašenie niekoho v spodnom prádle.", a:"Bugatti"},
+  {c:"znac", p:"Adi, dás!", h:"Otázka na Adiho, či ti niečo dá.", a:"Adidas"},
+  {c:"znac", p:"Ema, zón!", h:"Výkrik na Emu, aby sa vrátila do zóny.", a:"Amazon"},
+  {c:"znac", p:"Aú, di!", h:"Výkrik bolesti a oslovenie Di.", a:"Audi"},
+  {c:"znac", p:"Nu, tela!", h:"Povzbudenie pre telo, aby sa pohlo.", a:"Nutella"},
+  {c:"znac", p:"Nes, kafé!", h:"Rozkaz priniesť kávu.", a:"Nescafé"},
+  {c:"znac", p:"Star, baks!", h:"Slávna hviezda žiada slangové peniaze.", a:"Starbucks"},
+  {c:"znac", p:"Hjun, daj!", h:"Rozkaz pre Hjuna, aby niečo podal.", a:"Hyundai"},
+  {c:"znac", p:"Disk, kord!", h:"Počítačový disk a krátky meč.", a:"Discord"},
+  {c:"znac", p:"Fero, rošé!", h:"Fero si dáva ružové víno.", a:"Ferrero Rocher"},
+  {c:"znac", p:"Mak, buk!", h:"Kvet a strom: mak a buk.", a:"MacBook"},
+  {c:"znac", p:"Kit, kat!", h:"Tmel a popravca.", a:"KitKat"},
+  {c:"znac", ty:["fon","pre"], p:"Rytier, šport!", h:"Rytier, ktorý rád športuje.", a:"Ritter Sport"},
+  {c:"znac", ty:["fon","pre"], p:"Staré, link!", h:"Starý odkaz na webe.", a:"Starlink"},
+
+  // 🗺️ Miesta a krajiny
+  {c:"mies", p:"Maja, my!", h:"Výkrik na kamarátku Maju, že sme tu.", a:"Miami"},
+  {c:"mies", p:"Los, ten, žehlí!", h:"Zviera s parohmi vykonáva domáce práce.", a:"Los Angeles"},
+  {c:"mies", p:"Vlas, vegán!", h:"Keď upozorníš vegetariána, že má niečo na svetri.", a:"Las Vegas"},
+  {c:"mies", p:"Teks, as!", h:"Kovbojské eso v rukáve.", a:"Texas"},
+  {c:"mies", p:"Bruk, lin!", h:"Dlažobná kocka a sladkovodná ryba.", a:"Brooklyn"},
+  {c:"mies", p:"Ken, taký!", h:"Charakteristika Barbiinho priateľa.", a:"Kentucky"},
+  {c:"mies", p:"Ten, nesí!", h:"Ukazuješ na človeka, ktorý niečo nesie.", a:"Tennessee"},
+  {c:"mies", p:"Ala, bama!", h:"Výkrik na Alu a zvuk nárazu.", a:"Alabama"},
+  {c:"mies", p:"Kolo, rádo!", h:"Točíš kolo a robíš to rád.", a:"Colorado"},
+  {c:"mies", p:"Ne, vada!", h:"Uisťuješ niekoho: chyba (vada) to nie je.", a:"Nevada"},
+  {c:"mies", p:"Miko, nos!", h:"Nos kamaráta Mika.", a:"Mykonos"},
+  {c:"mies", p:"Naj, robí!", h:"Ten najlepší to robí.", a:"Nairobi"},
+
+  // 🎵 Hudba a hry
+  {c:"hud", p:"Gang, nám, štýl!", h:"Banda nám dáva štýl.", a:"Gangnam Style"},
+  {c:"hud", p:"Depeš, mód!", h:"Telegram v určitom režime.", a:"Depeche Mode"},
+  {c:"hud", p:"Led, zepelín!", h:"Zamrznutá vzducholoď.", a:"Led Zeppelin"},
+  {c:"hud", p:"Máš, efekt!", h:"Konštatovanie, že máš silný účinok.", a:"Mass Effect"},
+  {c:"hud", p:"Skaj, rím!", h:"Umelá koža, ktorá sa rýmuje.", a:"Skyrim"},
+]);

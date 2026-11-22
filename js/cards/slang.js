@@ -1,0 +1,85 @@
+// 🗣️ Prezývky a slang — Prezývka alebo slangový názov.
+// Polia karty: c = kategória (id z js/config.js), p = text na karte, h = nápoveda, a = správna odpoveď.
+// Voliteľné: ty = viac typov naraz, napr. ["fon","pre"]; lg = jazyk odpovede "sk" / "orig" (inak sa odhadne).
+// Pozor: p slúži aj ako ID karty — po zmene p sa stratia úpravy, ktoré si hráč ku karte uložil v aplikácii.
+GAME.addCards("sla", [
+
+  // 🎬 Filmy, seriály a postavy
+  {c:"film", p:"Agent 007", h:"Filmová postava, začína na J.", a:"James Bond"},
+  {c:"film", p:"Muž z ocele", h:"Superhrdina, začína na S.", a:"Superman"},
+  {c:"film", p:"Temný rytier", h:"Superhrdina, začína na B.", a:"Batman"},
+  {c:"film", p:"Chlapec, ktorý prežil", h:"Filmová postava, začína na H.", a:"Harry Potter"},
+  {c:"film", p:"Ten, koho neslobodno menovať", h:"Filmová postava, začína na V.", a:"Voldemort"},
+  {c:"film", p:"Matka drakov", h:"Seriálová postava, začína na D.", a:"Daenerys Targaryen"},
+  {c:"film", p:"Kapitán Čiernej perly", h:"Filmová postava, začína na J.", a:"Jack Sparrow"},
+  {c:"film", p:"Priateľský sused", h:"Superhrdina, začína na S.", a:"Spider-Man"},
+  {c:"film", p:"Heisenberg", h:"Seriálová postava, začína na W.", a:"Walter White"},
+  {c:"film", p:"Boh hromu", h:"Superhrdina, začína na T.", a:"Thor"},
+
+  // 🌟 Známe osobnosti
+  {c:"osob", p:"Kráľ popu", h:"Spevák, začína na M.", a:"Michael Jackson"},
+  {c:"osob", p:"Kráľ rokenrolu", h:"Spevák, začína na E.", a:"Elvis Presley"},
+  {c:"osob", p:"Arnie", h:"Herec, začína na A.", a:"Arnold Schwarzenegger"},
+  {c:"osob", p:"Skala", h:"Herec, začína na D.", a:"Dwayne Johnson"},
+  {c:"osob", p:"Boss", h:"Spevák, začína na B.", a:"Bruce Springsteen"},
+  {c:"osob", p:"Slim Shady", h:"Raper, začína na E.", a:"Eminem"},
+  {c:"osob", p:"CR7", h:"Futbalista, začína na C.", a:"Cristiano Ronaldo"},
+  {c:"osob", p:"Blcha", h:"Futbalista, začína na L.", a:"Lionel Messi"},
+  {c:"osob", p:"Božia ruka", h:"Futbalista, začína na D.", a:"Diego Maradona"},
+  {c:"osob", p:"Železný Mike", h:"Boxer, začína na M.", a:"Mike Tyson"},
+  {c:"osob", p:"Jeho vzdušnosť", h:"Basketbalista, začína na M.", a:"Michael Jordan"},
+  {c:"osob", p:"Čierna mamba", h:"Basketbalista, začína na K.", a:"Kobe Bryant"},
+  {c:"osob", p:"Kráľ James", h:"Basketbalista, začína na L.", a:"LeBron James"},
+  {c:"osob", p:"Ibra", h:"Futbalista, začína na Z.", a:"Zlatan Ibrahimović"},
+  {c:"osob", p:"Železná lady", h:"Politička, začína na M.", a:"Margaret Thatcher"},
+  {c:"osob", p:"Kráľovná popu", h:"Speváčka, začína na M.", a:"Madonna"},
+  {c:"osob", p:"Princ temnôt", h:"Spevák, začína na O.", a:"Ozzy Osbourne"},
+  {c:"osob", p:"Queen B", h:"Speváčka, začína na B.", a:"Beyoncé"},
+  {c:"osob", p:"RiRi", h:"Speváčka, začína na R.", a:"Rihanna"},
+  {c:"osob", p:"J.Lo", h:"Speváčka, začína na J.", a:"Jennifer Lopez"},
+  {c:"osob", p:"Schumi", h:"Pretekár, začína na M.", a:"Michael Schumacher"},
+  {c:"osob", p:"Kaiser", h:"Futbalista, začína na F.", a:"Franz Beckenbauer"},
+
+  // 🏷️ Značky a technológie
+  {c:"znac", p:"Mekáč", h:"Reštaurácia, začína na M.", a:"McDonald's"},
+  {c:"znac", p:"Kefíčko", h:"Reštaurácia, začína na K.", a:"KFC"},
+  {c:"znac", p:"Fejs", h:"Sociálna sieť, začína na F.", a:"Facebook"},
+  {c:"znac", p:"Insta", h:"Sociálna sieť, začína na I.", a:"Instagram"},
+  {c:"znac", p:"Plejko", h:"Herná konzola, začína na P.", a:"PlayStation"},
+  {c:"znac", p:"Kaufko", h:"Obchod, začína na K.", a:"Kaufland"},
+  {c:"znac", p:"Bavorák", h:"Auto, začína na B.", a:"BMW"},
+  {c:"znac", p:"Meďák", h:"Auto, začína na M.", a:"Mercedes"},
+  {c:"znac", p:"Oktávka", h:"Auto, začína na Š.", a:"Škoda Octavia"},
+  {c:"znac", p:"Chrobák", h:"Auto, začína na V.", a:"Volkswagen Beetle"},
+  {c:"znac", p:"Kačica", h:"Auto, začína na C.", a:"Citroën 2CV"},
+  {c:"znac", p:"Harlejka", h:"Motorka, začína na H.", a:"Harley-Davidson"},
+  {c:"znac", p:"Nahryznuté jablko", h:"Značka, začína na A.", a:"Apple"},
+  {c:"znac", p:"Modrý vtáčik", h:"Sociálna sieť, začína na T.", a:"Twitter"},
+
+  // 🗺️ Miesta a krajiny
+  {c:"mies", p:"Mesto hriechu", h:"Mesto, začína na L.", a:"Las Vegas"},
+  {c:"mies", p:"Večné mesto", h:"Mesto, začína na R.", a:"Rím"},
+  {c:"mies", p:"Mesto svetiel", h:"Mesto, začína na P.", a:"Paríž"},
+  {c:"mies", p:"Stovežatá", h:"Mesto, začína na P.", a:"Praha"},
+  {c:"mies", p:"Krásavica na Dunaji", h:"Mesto, začína na B.", a:"Bratislava"},
+  {c:"mies", p:"Krajina vychádzajúceho slnka", h:"Krajina, začína na J.", a:"Japonsko"},
+  {c:"mies", p:"Zelený ostrov", h:"Krajina, začína na Í.", a:"Írsko"},
+  {c:"mies", p:"Krajina tisícich jazier", h:"Krajina, začína na F.", a:"Fínsko"},
+  {c:"mies", p:"Čižma", h:"Krajina, začína na T.", a:"Taliansko"},
+  {c:"mies", p:"Krajina javorového listu", h:"Krajina, začína na K.", a:"Kanada"},
+  {c:"mies", p:"Ríša stredu", h:"Krajina, začína na Č.", a:"Čína"},
+  {c:"mies", p:"Strecha sveta", h:"Územie, začína na T.", a:"Tibet"},
+  {c:"mies", p:"Čierny kontinent", h:"Kontinent, začína na A.", a:"Afrika"},
+  {c:"mies", p:"Krajina tulipánov", h:"Krajina, začína na H.", a:"Holandsko"},
+  {c:"mies", p:"Mesto anjelov", h:"Mesto, začína na L.", a:"Los Angeles"},
+
+  // 🎵 Hudba a hry
+  {c:"hud", p:"Liverpoolska štvorka", h:"Kapela, začína na B.", a:"The Beatles"},
+  {c:"hud", p:"Depešáci", h:"Kapela, začína na D.", a:"Depeche Mode"},
+  {c:"hud", p:"Stouni", h:"Kapela, začína na R.", a:"Rolling Stones"},
+  {c:"hud", p:"Metla", h:"Kapela, začína na M.", a:"Metallica"},
+  {c:"hud", p:"Céeska", h:"Hra, začína na C.", a:"Counter-Strike"},
+  {c:"hud", p:"Géteáčko", h:"Hra, začína na G.", a:"Grand Theft Auto"},
+  {c:"hud", p:"WoWko", h:"Hra, začína na W.", a:"World of Warcraft"},
+  {c:"hud", p:"LoLko", h:"Hra, začína na L.", a:"League of Legends"},
+]);
