@@ -52,3 +52,19 @@ Karta vyzerá takto:
 4. Pridaj súbor do `ASSETS` v `sw.js` a zvýš `CACHE` (napr. `mtnj-v2`).
 
 Pri bežných úpravách existujúcich súborov netreba v `sw.js` nič meniť. Online sa vždy načíta čerstvá verzia a cache sa používa len offline. Service worker obchádza HTTP cache prehliadača a po nasadení novej verzie sa stránka sama znova načíta, ale nie počas rozohraného kola.
+
+## Verzia a cache
+
+Číslo verzie je v súbore `VERSION`. Pred každým nasadením, ktoré mení CSS alebo JS, spusti:
+
+```sh
+scripts/bump-version.sh
+```
+
+Skript zvýši verziu a prepíše ju:
+
+- v `index.html`: `?v=N` pri CSS a JS a text „verzia N“ na úvodnej obrazovke
+- v `sw.js`: `VERSION`, z ktorého sa skladá názov cache a `?v=N` v `ASSETS`
+
+Prehliadač tak vždy stiahne nové súbory a starú cache service worker zmaže. `scripts/bump-version.sh --sync` iba prepíše súbory aktuálnou verziou, bez zvýšenia.
+

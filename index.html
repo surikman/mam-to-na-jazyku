@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Na jazyku">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/styles.css?v=4">
 </head>
 <body>
 <div class="wrap">
@@ -129,6 +129,7 @@
       <button class="btn ghost hidden" id="resumeBtn">Pokračovať v rozohranej hre</button>
     </div>
   </div>
+  <p class="ver">verzia <span id="appVersion">4</span></p>
 </section>
 
 <!-- PREHĽAD KARIET -->
@@ -200,15 +201,15 @@
 
 </div>
 
-<script src="js/config.js"></script>
-<script src="js/cards/phonetic.js"></script>
-<script src="js/cards/translations.js"></script>
-<script src="js/cards/slang.js"></script>
-<script src="js/cards/descriptions.js"></script>
-<script src="js/cards/emoji.js"></script>
-<script src="js/cards/reversed.js"></script>
-<script src="js/cards/rebus.js"></script>
-<script src="js/app.js"></script>
+<script src="js/config.js?v=4"></script>
+<script src="js/cards/phonetic.js?v=4"></script>
+<script src="js/cards/translations.js?v=4"></script>
+<script src="js/cards/slang.js?v=4"></script>
+<script src="js/cards/descriptions.js?v=4"></script>
+<script src="js/cards/emoji.js?v=4"></script>
+<script src="js/cards/reversed.js?v=4"></script>
+<script src="js/cards/rebus.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });

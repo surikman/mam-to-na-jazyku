@@ -3,21 +3,22 @@
 // Google Fonts: najprv cache.
 // Sieťové požiadavky idú s cache:"no-cache", aby HTTP cache prehliadača (GitHub Pages: max-age=600)
 // nevrátila starý JS k novému HTML.
-// CACHE zvýš len pri zmene zoznamu ASSETS (pridaný/odstránený súbor).
-var CACHE = "mtnj-v2";
+// VERSION prepisuje scripts/bump-version.sh (zdroj: súbor VERSION) – nemeň ho ručne.
+var VERSION = "4";
+var CACHE = "mtnj-v" + VERSION;
 var ASSETS = [
   "./",
   "index.html",
-  "css/styles.css",
-  "js/config.js",
-  "js/cards/phonetic.js",
-  "js/cards/translations.js",
-  "js/cards/slang.js",
-  "js/cards/descriptions.js",
-  "js/cards/emoji.js",
-  "js/cards/reversed.js",
-  "js/cards/rebus.js",
-  "js/app.js",
+  "css/styles.css?v=" + VERSION,
+  "js/config.js?v=" + VERSION,
+  "js/cards/phonetic.js?v=" + VERSION,
+  "js/cards/translations.js?v=" + VERSION,
+  "js/cards/slang.js?v=" + VERSION,
+  "js/cards/descriptions.js?v=" + VERSION,
+  "js/cards/emoji.js?v=" + VERSION,
+  "js/cards/reversed.js?v=" + VERSION,
+  "js/cards/rebus.js?v=" + VERSION,
+  "js/app.js?v=" + VERSION,
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",

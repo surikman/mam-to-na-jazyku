@@ -183,5 +183,6 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .eform .save{background:var(--accent);color:var(--accent-fg)}
 .eform .cancel{background:var(--bg);border:1.5px solid var(--border)}
 
+.ver{text-align:center;color:var(--muted);font-size:12px;margin:10px 0 0;opacity:.7}
 .hidden{display:none!important}
 @media (prefers-reduced-motion: reduce){.card{transition:none} #actions > *{animation:none}}
