@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mám to na jazyku!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f0fa; --fg:#1d1a33; --muted:#6a6585; --surface:#ffffff; --border:#d9d3ec;
+  --accent:#4b3fd1; --accent-fg:#ffffff; --ok:#1fa65a; --bad:#d92d3a;
+  --back:#1d1a3d; --hint:#3a4fd6; --phon:#ffd23f; --phon-fg:#2a2200;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12101f; --fg:#efecfb; --muted:#9d97bd; --surface:#1d1a31; --border:#332f52;
+    --accent:#8b80ff; --accent-fg:#12101f; --back:#2a2650;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12101f; --fg:#efecfb; --muted:#9d97bd; --surface:#1d1a31; --border:#332f52;
+  --accent:#8b80ff; --accent-fg:#12101f; --back:#2a2650;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font-family:"Fredoka","Nunito","Segoe UI",system-ui,-apple-system,sans-serif;
+  font-size:17px;line-height:1.4;min-height:100vh;
+}
+.wrap{max-width:520px;margin:0 auto;padding:18px 16px 40px}
+h1{font-size:34px;line-height:1.05;margin:8px 0 4px;font-weight:700;letter-spacing:-.01em}
+h2{font-size:22px;margin:0 0 10px;font-weight:600}
+p.lead{color:var(--muted);margin:0 0 20px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.row + .row{margin-top:14px}
+.lbl{font-weight:500}
+.lbl small{display:block;color:var(--muted);font-weight:400;font-size:14px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:3px;gap:3px;flex:0 0 auto}
+.seg button{padding:8px 12px;border-radius:11px;font-weight:500}
+.seg button.on{background:var(--accent);color:var(--accent-fg)}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:40px;height:40px;border-radius:12px;background:var(--bg);border:1px solid var(--border);font-size:22px;font-weight:600}
+.step output{min-width:44px;text-align:center;font-size:22px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{padding:8px 12px;border-radius:999px;border:1.5px solid var(--border);font-size:15px;background:var(--bg)}
+.chip.on{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
+.btn{display:block;width:100%;padding:16px;border-radius:16px;font-size:20px;font-weight:600;text-align:center}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.ok{background:var(--ok);color:#fff}
+.btn.ghost{background:var(--surface);border:1.5px solid var(--border)}
+.btn.small{padding:11px;font-size:16px}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.hold{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+.btn.hold.down{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.stack{display:grid;gap:10px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rules{color:var(--muted);font-size:15px;margin:0 0 16px}
+.msg{color:var(--bad);text-align:center;font-size:15px;min-height:20px;margin:0 0 8px}
+
+.dot{display:grid;place-items:center;border-radius:50%;color:#fff;font-weight:700;flex:0 0 auto}
+
+/* Hra */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.topbar .count{color:var(--muted);font-weight:500}
+.topbar .btns{display:flex;gap:8px}
+.topbar .btns button,.topbar > button{padding:8px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-weight:500;font-size:15px}
+
+.turn{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:10px 16px 10px 10px;margin-bottom:12px}
+.turn .side{display:flex;align-items:center;gap:12px}
+.turn .side .dot{width:62px;height:62px;font-size:34px}
+.turn .side .lab{font-size:22px;font-weight:700;line-height:1.1}
+.turn .side.r{opacity:.9}
+.turn .side.r .dot{width:38px;height:38px;font-size:20px}
+.turn .side.r .lab{font-size:15px;font-weight:500;color:var(--muted)}
+
+.stage{perspective:1200px;margin-bottom:14px}
+.card{
+  position:relative;min-height:340px;border-radius:26px;padding:22px 20px 20px;
+  display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;
+  color:#fff;transition:transform .18s ease-in;transform:rotateY(0deg);
+  box-shadow:0 14px 34px rgba(30,20,90,.28);user-select:none;-webkit-user-select:none;
+}
+.card.flipping{transform:rotateY(90deg)}
+.card.c-back{background:radial-gradient(circle at 30% 20%,#3a3470 0,var(--back) 62%);cursor:pointer}
+.card.c-prep,.card.c-judge{background:var(--back)}
+.card.c-hint{background:var(--hint);cursor:pointer}
+.card.c-phon{background:var(--phon);color:var(--phon-fg)}
+.card.c-red{background:var(--bad)}
+.card.c-green{background:var(--ok)}
+.card .tag{font-size:16px;font-weight:500;opacity:.9;min-height:24px}
+.card .pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px}
+.card .cat{font-size:15px;font-weight:600;padding:5px 14px;border-radius:99px;background:rgba(255,255,255,.2)}
+.card.c-phon .cat{background:rgba(0,0,0,.12)}
+.card .cat:empty{display:none}
+.card .mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;width:100%}
+.card .main{font-size:clamp(34px,10.5vw,52px);font-weight:700;line-height:1.08;overflow-wrap:anywhere}
+.card .main.long{font-size:clamp(24px,7vw,32px);font-weight:600;line-height:1.2}
+.card .main.q{font-size:110px;opacity:.5}
+.card .sub{font-size:18px;opacity:.9}
+.card .tm{width:100%;min-height:58px}
+.card .tm .num{font-size:30px;font-weight:700;line-height:1}
+.card .tm .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.28);margin-top:8px;overflow:hidden}
+.card.c-phon .tm .bar{background:rgba(0,0,0,.15)}
+.card .tm .bar i{display:block;height:100%;width:100%;background:currentColor;border-radius:99px}
+
+.peek{position:absolute;inset:0;border-radius:inherit;background:#0e0c1f;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px;pointer-events:none;z-index:2}
+.peek.on{display:flex}
+.peek small{opacity:.7;font-size:16px}
+.peek b{font-size:clamp(34px,10vw,50px);line-height:1.1;overflow-wrap:anywhere}
+
+.board{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;margin-top:10px}
+.pc{flex:0 0 auto;min-width:82px;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:8px 10px;text-align:center}
+.pc.now{border-color:var(--accent)}
+.pc .dot{width:30px;height:30px;font-size:16px;margin:0 auto 4px}
+.pc span{display:block;font-size:13px;color:var(--muted)}
+.hintline{text-align:center;color:var(--muted);margin:0 0 4px;font-size:15px}
+.toast{text-align:center;color:var(--muted);font-size:14px;min-height:20px}
+
+/* Výsledky */
+.rank{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border)}
+.rank:first-child{border-top:0}
+.rank .pos{width:34px;font-size:24px;text-align:center}
+.rank .dot{width:46px;height:46px;font-size:22px}
+.rank .info{flex:1}
+.rank .info b{font-size:20px}
+.rank .info span{display:block;color:var(--muted);font-size:14px}
+.rank .big{font-size:22px;font-weight:700}
+.log{font-size:15px}
+.log div{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid var(--border);gap:10px}
+.log div:first-child{border-top:0}
+.log em{font-style:normal;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:10px 0}
+
+/* Prehľad kariet */
+.cat-h{font-size:19px;font-weight:600;margin:18px 0 8px}
+.crow{display:flex;align-items:flex-start;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.crow.off{opacity:.5}
+.crow input[type=checkbox]{width:22px;height:22px;margin-top:4px;accent-color:var(--accent);flex:0 0 auto}
+.crow .txt{flex:1;min-width:0}
+.crow .txt b{display:block;font-size:18px}
+.crow .txt .ans{color:var(--accent);font-weight:600}
+.crow .txt small{display:block;color:var(--muted);font-size:14px;line-height:1.3}
+.crow .ed{padding:6px 10px;border-radius:10px;border:1px solid var(--border);font-size:14px;flex:0 0 auto}
+.eform{flex:1;display:grid;gap:8px}
+.eform label{font-size:13px;color:var(--muted);display:grid;gap:3px}
+.eform input,.eform select{font:inherit;padding:9px 10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--fg);width:100%}
+.eform .pair button{padding:10px;border-radius:12px;font-weight:600}
+.eform .save{background:var(--accent);color:var(--accent-fg)}
+.eform .cancel{background:var(--bg);border:1.5px solid var(--border)}
+
+.hidden{display:none!important}
+@media (prefers-reduced-motion: reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- NASTAVENIA -->
+<section id="setup">
+  <h1>Mám to na jazyku!</h1>
+  <p class="lead">Známe filmy, osobnosti, značky a miesta v prestrojení: zvukom, prekladom, emoji aj odzadu. Kto ich odhalí najrýchlejšie?</p>
+  <p class="rules">Jeden číta z telefónu, druhý hádá. Kto má tip, stlačí Stop. Čitateľ si podržaním tlačidla overí odpoveď. Po každej karte sa úlohy vymenia.</p>
+
+  <div class="panel">
+    <div class="row">
+      <div class="lbl">Ako sa hrá</div>
+      <div class="seg" id="modeSeg">
+        <button data-mode="teams" class="on">Tímy</button>
+        <button data-mode="solo">Jednotlivci</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="lbl" id="countLbl">Počet tímov</div>
+      <div class="step" data-key="n" data-min="2" data-max="12" data-inc="1">
+        <button type="button" data-d="-1" aria-label="Menej">−</button><output>2</output><button type="button" data-d="1" aria-label="Viac">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <div class="lbl">Nápoveda<small>Karta „čo to znamená“ pred frázou</small></div>
+      <div class="seg" id="hintsSeg">
+        <button data-v="1">Zapnutá</button>
+        <button data-v="0">Vypnutá</button>
+      </div>
+    </div>
+    <div class="row" id="hintTimerRow">
+      <div class="lbl">Odpočet nápovedy<small>Inak frázu ukážeš ťuknutím</small></div>
+      <div class="seg" id="hintSeg">
+        <button data-v="0">Vypnutý</button>
+        <button data-v="1">Zapnutý</button>
+      </div>
+    </div>
+    <div class="row" id="t1row">
+      <div class="lbl">Trvanie nápovedy<small>v sekundách</small></div>
+      <div class="step" data-key="t1" data-min="3" data-max="60" data-inc="1">
+        <button type="button" data-d="-1" aria-label="Menej">−</button><output>8</output><button type="button" data-d="1" aria-label="Viac">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <div class="lbl">Časomíra pri fráze<small>Čas sa meria aj bez nej</small></div>
+      <div class="seg" id="timerSeg">
+        <button data-v="1">Zapnutá</button>
+        <button data-v="0">Vypnutá</button>
+      </div>
+    </div>
+    <div class="row" id="t2row">
+      <div class="lbl">Dĺžka odpočtu<small>v sekundách</small></div>
+      <div class="step" data-key="t2" data-min="3" data-max="90" data-inc="1">
+        <button type="button" data-d="-1" aria-label="Menej">−</button><output>15</output><button type="button" data-d="1" aria-label="Viac">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <div class="lbl">Odpoveď vopred<small>Čitateľ si ju pozrie pred štartom</small></div>
+      <div class="seg" id="prevSeg">
+        <button data-v="1">Áno</button>
+        <button data-v="0">Nie</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="lbl">Trest za zlý tip<small>sekundy pripočítané k času</small></div>
+      <div class="step" data-key="pen" data-min="0" data-max="30" data-inc="1">
+        <button type="button" data-d="-1" aria-label="Menej">−</button><output>3</output><button type="button" data-d="1" aria-label="Viac">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="lbl">Typ kariet<small>Vyber, aké hádanky sa budú miešať</small></div>
+    <div class="chips" id="typeChips"></div>
+    <div class="lbl" style="margin-top:16px">Kategórie</div>
+    <div class="chips" id="catChips"></div>
+    <button class="btn ghost small" id="cardsBtn" style="margin-top:14px">Prehľad kariet</button>
+  </div>
+
+  <p class="msg" id="startMsg"></p>
+  <div class="stack">
+    <button class="btn primary" id="startBtn">Začať hru</button>
+    <button class="btn ghost hidden" id="resumeBtn">Pokračovať v rozohranej hre</button>
+  </div>
+</section>
+
+<!-- PREHĽAD KARIET -->
+<section id="cards" class="hidden">
+  <div class="topbar">
+    <h1 style="font-size:30px;margin:0">Karty</h1>
+    <button id="cardsBack">Hotovo</button>
+  </div>
+  <p class="lead" id="cardsLead" style="margin-bottom:12px"></p>
+  <div class="pair" style="margin-bottom:6px">
+    <button class="btn ghost small" id="allOn">Zapnúť všetky</button>
+    <button class="btn ghost small" id="addCard">+ Pridať vlastnú kartu</button>
+  </div>
+  <button class="btn ghost small hidden" id="restoreBtn" style="margin-bottom:6px">Obnoviť odstránené karty</button>
+  <div id="cardList"></div>
+</section>
+
+<!-- HRA -->
+<section id="game" class="hidden">
+  <div class="topbar">
+    <div class="count" id="roundCount">Karta 1</div>
+    <div class="btns">
+      <button id="scoreBtn">Skóre</button>
+      <button id="endBtn">Koniec hry</button>
+    </div>
+  </div>
+
+  <div class="turn" id="turn">
+    <div class="side"><div class="dot" id="turnDot">1</div><div class="lab" id="turnLab">Hádá</div></div>
+    <div class="side r"><div class="lab" id="readLab">Číta</div><div class="dot" id="readDot">2</div></div>
+  </div>
+
+  <div class="stage">
+    <div class="card c-back" id="card" role="button" tabindex="0" aria-live="polite">
+      <div class="pills"><div class="cat" id="cat"></div><div class="cat" id="typ"></div><div class="cat" id="lng"></div></div>
+      <div class="tag" id="tag"></div>
+      <div class="mid"><div class="main" id="main"></div><div class="sub" id="sub"></div></div>
+      <div class="tm" id="tm"><div class="num" id="num"></div><div class="bar"><i id="bar"></i></div></div>
+      <div class="peek" id="peek"><small>Správna odpoveď</small><b id="peekText"></b></div>
+    </div>
+  </div>
+  <div id="actions" class="stack"></div>
+  <div class="toast" id="toast"></div>
+  <div class="board" id="board"></div>
+</section>
+
+<!-- VÝSLEDKY -->
+<section id="results" class="hidden">
+  <h1>Výsledky</h1>
+  <p class="lead" id="resLead"></p>
+  <div class="panel">
+    <div class="row" style="margin-bottom:6px">
+      <div class="lbl">Poradie podľa</div>
+      <div class="seg" id="rankSeg">
+        <button data-r="best" class="on">Najlepší čas</button>
+        <button data-r="count">Počet</button>
+      </div>
+    </div>
+    <div id="rankList"></div>
+  </div>
+  <div class="panel">
+    <h2>Všetky pokusy</h2>
+    <div class="log" id="log"></div>
+  </div>
+  <div class="stack">
+    <button class="btn primary" id="backBtn">Späť do hry</button>
+    <button class="btn ghost" id="newBtn">Nová hra</button>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var CATS = [
+  {id:"film", name:"🎬 Filmy, seriály a postavy"},
+  {id:"osob", name:"🌟 Známe osobnosti"},
+  {id:"znac", name:"🏷️ Značky a technológie"},
+  {id:"mies", name:"🗺️ Miesta a krajiny"},
+  {id:"hud", name:"🎵 Hudba a hry"},
+  {id:"slov", name:"📚 Slová a mená"}
+];
+
+var TYPES = [
+  {id:"fon", icon:"🔊", name:"Fonetické", tag:"Čítaj nahlas, rýchlo za sebou", hintTag:"Čo to znamená"},
+  {id:"pre", icon:"🌐", name:"Doslovné preklady", tag:"Doslovný preklad. Aký je originál?", hintTag:"Nápoveda"},
+  {id:"sla", icon:"🗣️", name:"Prezývky a slang", tag:"Prezývka alebo slang. Kto alebo čo to je?", hintTag:"Nápoveda"},
+  {id:"opi", icon:"📝", name:"Opisy", tag:"Opis. O čom je reč?", hintTag:"Nápoveda"},
+  {id:"emo", icon:"😀", name:"Emoji hádanky", tag:"Emoji hádanka. Opíš ich alebo ukáž.", hintTag:"Nápoveda"},
+  {id:"rev", icon:"🔄", name:"Odzadu", tag:"Napísané odzadu. Prečítaj to nahlas.", hintTag:"Nápoveda"},
+  {id:"reb", icon:"🧩", name:"Obrázkogramy", tag:"Obrázkogram. Poskladaj slovo z obrázkov a písmen.", hintTag:"Nápoveda"}
+];
+var TYPE_MIX_TAG = "Čítaj nahlas. Zvuk alebo preklad?";
+function typeOf(id){ return TYPES.filter(function(t){return t.id===id;})[0]; }
+function normTy(a){
+  var r = (a||[]).filter(function(id){ return !!typeOf(id); });
+  return r.length ? r : ["fon"];
+}
+
+var CARDS = [
+  {c:"film", p:"Ďura, syr, párky!", h:"Výkrik na Juraja, aby si vzal raňajky.", a:"Jurassic Park"},
+  {c:"film", p:"Dedo pľul", h:"Konštatovanie o neslušnom dedkovi.", a:"Deadpool"},
+  {c:"film", p:"Chorý pot, hej?", h:"Keď niekto na tréningu znie a vyzerá veľmi zle.", a:"Harry Potter"},
+  {c:"film", p:"Starý voz", h:"Ojazdené auto.", a:"Star Wars"},
+  {c:"film", p:"Z Kuby, dnu!", h:"Pokyn na colnici pre tovar z Havany.", a:"Scooby-Doo"},
+  {c:"film", p:"Termín na to", h:"Keď si musíš nájsť čas v kalendári.", a:"Terminátor"},
+  {c:"film", p:"Gejm, ov trón!", h:"Trón, ktorý patrí hráčovi videohier.", a:"Game of Thrones"},
+  {c:"film", p:"Doktor, hú!", h:"Lekár, ktorý húka ako sova.", a:"Doctor Who"},
+  {c:"osob", p:"Brat pýta", h:"Keď súrodenec žiada peniaze.", a:"Brad Pitt"},
+  {c:"osob", p:"Brus, vylis!", h:"Rozkaz v dielni – najprv to zbrús a potom vylisuj.", a:"Bruce Willis"},
+  {c:"osob", p:"Kde, tie, pery?", h:"Znepokojená otázka plastického chirurga.", a:"Katy Perry"},
+  {c:"osob", p:"Maj kel, džem, sen!", h:"Bizarné ranné prianie.", a:"Michael Jackson"},
+  {c:"osob", p:"Lej, ty, gága!", h:"Keď kážeš nalievať, kým ti do toho gága hus.", a:"Lady Gaga"},
+  {c:"osob", p:"Šak, noríš!", h:"Hovorové povzbudenie pre potápača.", a:"Chuck Norris"},
+  {c:"osob", p:"Jed, šírim!", h:"Zloduch v komikse oznamuje svoj plán.", a:"Ed Sheeran"},
+  {c:"osob", p:"Mrak, cukor, breh!", h:"Náhodný zhluk slov o počasí a sladkostiach pri vode.", a:"Mark Zuckerberg"},
+  {c:"osob", p:"Tom, krúž!", h:"Rozkaz Tomovi, aby krúžil dookola.", a:"Tom Cruise"},
+  {c:"osob", p:"Džim, kari!", h:"Džim varí indické korenie.", a:"Jim Carrey"},
+  {c:"osob", p:"Dávid, bek, kam?", h:"Otázka na obrancu Dávida, kam to ide.", a:"David Beckham"},
+  {c:"osob", p:"Margo, robí!", h:"Konštatovanie, že Margo niečo robí.", a:"Margot Robbie"},
+  {c:"osob", p:"Džejson, štátem!", h:"Džejson vládne celým štátom.", a:"Jason Statham"},
+  {c:"osob", p:"Vin, dízl!", h:"Víno zmiešané s naftou.", a:"Vin Diesel"},
+  {c:"osob", p:"Húpi, gold, berg!", h:"Skákanie na zlatom kopci.", a:"Whoopi Goldberg"},
+  {c:"znac", p:"Iný sto gram", h:"Keď si v lahôdkach pýtaš inú salámu.", a:"Instagram"},
+  {c:"znac", p:"Juj, dub!", h:"Zľaknutie sa stromu v lese.", a:"YouTube"},
+  {c:"mies", p:"Maja, my!", h:"Výkrik na kamarátku Maju, že sme tu.", a:"Miami"},
+  {c:"znac", p:"Voz, cap!", h:"Absurdný prepravný prostriedok na dedine.", a:"WhatsApp"},
+  {c:"znac", p:"Vôl, ti, znie!", h:"Gazda upozorňuje na zvuky z maštale.", a:"Walt Disney"},
+  {c:"mies", p:"Los, ten, žehlí!", h:"Zviera s parohmi vykonáva domáce práce.", a:"Los Angeles"},
+  {c:"znac", p:"Blud, tu!", h:"Konštatovanie, že niekto hovorí nezmysel.", a:"Bluetooth"},
+  {c:"znac", p:"Rieď, bôľ!", h:"Archaická rada z lekárne.", a:"Red Bull"},
+  {c:"znac", p:"To je tá!", h:"Nadšené zvolanie, keď nájdeš správnu vec.", a:"Toyota"},
+  {c:"mies", p:"Vlas, vegán!", h:"Keď upozorníš vegetariána, že má niečo na svetri.", a:"Las Vegas"},
+  {c:"znac", p:"Bu, gaťi!", h:"Strašenie niekoho v spodnom prádle.", a:"Bugatti"},
+  {c:"znac", p:"Adi, dás!", h:"Otázka na Adiho, či ti niečo dá.", a:"Adidas"},
+  {c:"znac", p:"Ema, zón!", h:"Výkrik na Emu, aby sa vrátila do zóny.", a:"Amazon"},
+  {c:"znac", p:"Aú, di!", h:"Výkrik bolesti a oslovenie Di.", a:"Audi"},
+  {c:"mies", p:"Teks, as!", h:"Kovbojské eso v rukáve.", a:"Texas"},
+  {c:"mies", p:"Bruk, lin!", h:"Dlažobná kocka a sladkovodná ryba.", a:"Brooklyn"},
+  {c:"znac", p:"Nu, tela!", h:"Povzbudenie pre telo, aby sa pohlo.", a:"Nutella"},
+  {c:"znac", p:"Nes, kafé!", h:"Rozkaz priniesť kávu.", a:"Nescafé"},
+  {c:"znac", p:"Star, baks!", h:"Slávna hviezda žiada slangové peniaze.", a:"Starbucks"},
+  {c:"znac", p:"Hjun, daj!", h:"Rozkaz pre Hjuna, aby niečo podal.", a:"Hyundai"},
+  {c:"znac", p:"Disk, kord!", h:"Počítačový disk a krátky meč.", a:"Discord"},
+  {c:"znac", p:"Fero, rošé!", h:"Fero si dáva ružové víno.", a:"Ferrero Rocher"},
+  {c:"mies", p:"Ken, taký!", h:"Charakteristika Barbiinho priateľa.", a:"Kentucky"},
+  {c:"mies", p:"Ten, nesí!", h:"Ukazuješ na človeka, ktorý niečo nesie.", a:"Tennessee"},
+  {c:"mies", p:"Ala, bama!", h:"Výkrik na Alu a zvuk nárazu.", a:"Alabama"},
+  {c:"mies", p:"Kolo, rádo!", h:"Točíš kolo a robíš to rád.", a:"Colorado"},
+  {c:"mies", p:"Ne, vada!", h:"Uisťuješ niekoho: chyba (vada) to nie je.", a:"Nevada"},
+
+  {c:"film", ty:["fon","pre"], p:"Staré gate!", h:"Stará brána, napoly po slovensky a napoly po anglicky.", a:"Stargate"},
+
+  {c:"film", p:"Ex, men!", h:"Takto sa hovorí bývalým mužom.", a:"X-Men"},
+
+  {c:"film", p:"Kasa, de, papel!", h:"Pokladňa z papiera.", a:"La Casa de Papel"},
+
+  {c:"film", p:"Inšpekcia!", h:"Kontrola, ktorú robí inšpektor.", a:"Inception"},
+
+  {c:"film", p:"Vy, plaš!", h:"Rozkaz, aby si niekoho vyplašil.", a:"Whiplash"},
+
+  {c:"osob", p:"Hjú, grant!", h:"Výkrik prekvapenia a finančná podpora.", a:"Hugh Grant"},
+
+  {c:"osob", p:"Kris, rok!", h:"Dýka, ktorá trvá celý rok.", a:"Chris Rock"},
+
+  {c:"osob", p:"Džoni, keš!", h:"Džoni platí v hotovosti.", a:"Johnny Cash"},
+
+  {c:"osob", p:"Ema, stoň!", h:"Rozkaz Eme, aby hlasno stonala.", a:"Emma Stone"},
+
+  {c:"znac", p:"Mak, buk!", h:"Kvet a strom: mak a buk.", a:"MacBook"},
+
+  {c:"znac", p:"Kit, kat!", h:"Tmel a popravca.", a:"KitKat"},
+
+  {c:"znac", ty:["fon","pre"], p:"Rytier, šport!", h:"Rytier, ktorý rád športuje.", a:"Ritter Sport"},
+
+  {c:"znac", ty:["fon","pre"], p:"Staré, link!", h:"Starý odkaz na webe.", a:"Starlink"},
+
+  {c:"mies", p:"Miko, nos!", h:"Nos kamaráta Mika.", a:"Mykonos"},
+
+  {c:"mies", p:"Naj, robí!", h:"Ten najlepší to robí.", a:"Nairobi"},
+
+  {c:"hud", p:"Gang, nám, štýl!", h:"Banda nám dáva štýl.", a:"Gangnam Style"},
+
+  {c:"hud", p:"Depeš, mód!", h:"Telegram v určitom režime.", a:"Depeche Mode"},
+
+  {c:"hud", p:"Led, zepelín!", h:"Zamrznutá vzducholoď.", a:"Led Zeppelin"},
+
+  {c:"hud", p:"Máš, efekt!", h:"Konštatovanie, že máš silný účinok.", a:"Mass Effect"},
+
+  {c:"hud", p:"Skaj, rím!", h:"Umelá koža, ktorá sa rýmuje.", a:"Skyrim"},
+
+  {c:"film", t:"t", p:"Netopierí muž", h:"Hrdina v plášti, ktorý chráni Gotham.", a:"Batman"},
+  {c:"film", t:"t", p:"Pavúčí muž", h:"Hrdina v červenomodrom obleku z New Yorku.", a:"Spider-Man"},
+  {c:"film", t:"t", p:"Mravčí muž", h:"Marvel hrdina, ktorý sa vie zmenšiť.", a:"Ant-Man"},
+  {c:"film", t:"t", p:"Mŕtvy bazén", h:"Zhovorčivý antihrdina v červenom.", a:"Deadpool"},
+  {c:"film", t:"t", p:"Rosomák", h:"Mutant s pazúrmi z adamantia.", a:"Wolverine"},
+  {c:"film", t:"t", p:"Zelený lampáš", h:"Hrdina z DC s prsteňom sily.", a:"Green Lantern"},
+  {c:"film", t:"t", p:"Doktor Čudák", h:"Čarodejník z Marvelu.", a:"Doctor Strange"},
+  {c:"film", t:"t", p:"Harry Hrnčiar", h:"Čarodejnícky chlapec s jazvou.", a:"Harry Potter"},
+  {c:"film", t:"t", p:"Čmeliak", h:"Riaditeľ školy čarodejníctva.", a:"Dumbledore"},
+  {c:"film", t:"t", p:"Žolík", h:"Zloduch z Gothamu s nalíčeným úsmevom.", a:"Joker"},
+  {c:"film", t:"t", p:"Matica", h:"Film s červenou a modrou tabletkou.", a:"Matrix"},
+  {c:"film", t:"t", p:"Čierne zrkadlo", h:"Seriál o temnej strane technológií.", a:"Black Mirror"},
+  {c:"film", t:"t", p:"Cudzie veci", h:"Seriál o dievčati Eleven a mestečku Hawkins.", a:"Stranger Things"},
+  {c:"film", t:"t", p:"Chodiaci mŕtvi", h:"Seriál o zombie apokalypse.", a:"The Walking Dead"},
+  {c:"film", t:"t", p:"Oranžová je nová čierna", h:"Seriál zo ženskej väznice.", a:"Orange Is the New Black"},
+  {c:"film", t:"t", p:"Radšej zavolaj Saulovi", h:"Seriál o právnikovi z Albuquerque.", a:"Better Call Saul"},
+  {c:"film", t:"t", p:"Obleky", h:"Seriál o právnikoch v New Yorku.", a:"Suits"},
+  {c:"film", t:"t", p:"Západný svet", h:"Seriál o robotoch v zábavnom parku.", a:"Westworld"},
+  {c:"film", t:"t", p:"Domovina", h:"Špionážny seriál s Carrie.", a:"Homeland"},
+  {c:"film", t:"t", p:"Kalmárova hra", h:"Kórejský seriál o hre o život.", a:"Squid Game"},
+  {c:"film", t:"t", p:"Dom z kariet", h:"Politický seriál s Kevinom Spaceym.", a:"House of Cards"},
+  {c:"film", t:"t", p:"Pán Robot", h:"Seriál o hackerovi.", a:"Mr. Robot"},
+  {c:"film", t:"t", p:"Zomri tvrdo", h:"Akčná klasika s Bruceom Willisom.", a:"Die Hard"},
+  {c:"film", t:"t", p:"Zabi Billa", h:"Tarantinova pomsta nevesty.", a:"Kill Bill"},
+  {c:"film", t:"t", p:"Neslávni bastardi", h:"Tarantinova vojnová komédia.", a:"Inglourious Basterds"},
+  {c:"film", t:"t", p:"Psy z nádrže", h:"Tarantinov debut o lupičoch.", a:"Reservoir Dogs"},
+  {c:"film", t:"t", p:"Zlatý prst", h:"Bondovka so Seanom Connerym.", a:"Goldfinger"},
+  {c:"film", t:"t", p:"Kráľovské kasíno", h:"Bondovka s pokrovou hrou.", a:"Casino Royale"},
+  {c:"film", t:"t", p:"Pád z oblohy", h:"Bondovka s titulnou piesňou od Adele.", a:"Skyfall"},
+  {c:"film", t:"t", p:"Špinavý tanec", h:"Romantický film o tanci v lete 1963.", a:"Dirty Dancing"},
+  {c:"film", t:"t", p:"Statočné srdce", h:"Mel Gibson ako škótsky bojovník.", a:"Braveheart"},
+  {c:"film", t:"t", p:"Hviezdna cesta", h:"Sci-fi s Kirkom a Spockom.", a:"Star Trek"},
+
+  {c:"osob", t:"t", p:"Ema Kameň", h:"Herečka, ktorá hrala Cruellu.", a:"Emma Stone"},
+  {c:"osob", t:"t", p:"Krajčír Rýchly", h:"Speváčka s turné Eras Tour.", a:"Taylor Swift"},
+  {c:"osob", t:"t", p:"Kocka ľadu", h:"Raper pôvodom z N.W.A.", a:"Ice Cube"},
+  {c:"osob", t:"t", p:"Vanilkový ľad", h:"Raper s hitom Ice Ice Baby.", a:"Vanilla Ice"},
+  {c:"osob", t:"t", p:"Žihadlo", h:"Spevák, bývalý frontman skupiny The Police.", a:"Sting"},
+  {c:"osob", t:"t", p:"Mäsový bochník", h:"Rockový spevák z Bat Out of Hell.", a:"Meat Loaf"},
+  {c:"osob", t:"t", p:"Will Kováč", h:"Herec z filmu Muži v čiernom.", a:"Will Smith"},
+  {c:"osob", t:"t", p:"Harrison Brod", h:"Herec, ktorý hral Indianu Jonesa.", a:"Harrison Ford"},
+  {c:"osob", t:"t", p:"Gerard Komorník", h:"Herec, ktorý kričal „Toto je Sparta!“", a:"Gerard Butler"},
+  {c:"osob", t:"t", p:"Kevin Slanina", h:"Herec z filmu Footloose.", a:"Kevin Bacon"},
+  {c:"osob", t:"t", p:"Halle Bobuľa", h:"Herečka, ktorá hrala Catwoman.", a:"Halle Berry"},
+  {c:"osob", t:"t", p:"Bradley Debnár", h:"Herec z Kocoviny vo Vegas.", a:"Bradley Cooper"},
+  {c:"osob", t:"t", p:"Ryan Húsatko", h:"Herec z filmu La La Land.", a:"Ryan Gosling"},
+  {c:"osob", t:"t", p:"Šon Fazuľa", h:"Herec, ktorý hral Boromira.", a:"Sean Bean"},
+  {c:"osob", t:"t", p:"Elijah Les", h:"Herec, ktorý hral Froda.", a:"Elijah Wood"},
+  {c:"osob", t:"t", p:"Mark Dva", h:"Autor Toma Sawyera.", a:"Mark Twain"},
+  {c:"osob", t:"t", p:"Freddie Ortuť", h:"Spevák skupiny Queen.", a:"Freddie Mercury"},
+  {c:"osob", t:"t", p:"Ariana Veľká", h:"Speváčka s vysokým copom.", a:"Ariana Grande"},
+  {c:"osob", t:"t", p:"Steve Práce", h:"Zakladateľ Applu.", a:"Steve Jobs"},
+  {c:"osob", t:"t", p:"Bill Brány", h:"Zakladateľ Microsoftu.", a:"Bill Gates"},
+  {c:"osob", t:"t", p:"Mark Cukrový vrch", h:"Zakladateľ Facebooku.", a:"Mark Zuckerberg"},
+  {c:"osob", t:"t", p:"Elon Pižmo", h:"Šéf Tesly a SpaceX.", a:"Elon Musk"},
+  {c:"osob", t:"t", p:"Larry Strana", h:"Spoluzakladateľ Googlu.", a:"Larry Page"},
+  {c:"osob", t:"t", p:"Tim Kuchár", h:"Šéf Applu po Jobsovi.", a:"Tim Cook"},
+  {c:"osob", t:"t", p:"Tiger Lesy", h:"Golfista, ktorý vyhral množstvo majstrovstiev.", a:"Tiger Woods"},
+  {c:"osob", t:"t", p:"Usain Skrutka", h:"Najrýchlejší šprintér sveta.", a:"Usain Bolt"},
+  {c:"osob", t:"t", p:"Trasúci kopijou", h:"Autor Hamleta.", a:"William Shakespeare"},
+  {c:"osob", t:"t", p:"Justin Drevené jazero", h:"Spevák, bývalý člen skupiny NSYNC.", a:"Justin Timberlake"},
+
+  {c:"znac", t:"t", p:"Hviezdny odkaz", h:"Satelitný internet od SpaceX.", a:"Starlink"},
+  {c:"znac", t:"t", p:"Modrý zub", h:"Bezdrôtová technológia na slúchadlá.", a:"Bluetooth"},
+  {c:"znac", t:"t", p:"Kniha tvárí", h:"Sociálna sieť od Marka Zuckerberga.", a:"Facebook"},
+  {c:"znac", t:"t", p:"Čvirikanie", h:"Sociálna sieť s krátkymi príspevkami.", a:"Twitter"},
+  {c:"znac", t:"t", p:"Okná", h:"Operačný systém od Microsoftu.", a:"Windows"},
+  {c:"znac", t:"t", p:"Mikromäkký", h:"Softvérový gigant z Redmondu.", a:"Microsoft"},
+  {c:"znac", t:"t", p:"Silný bod", h:"Program na prezentácie.", a:"PowerPoint"},
+  {c:"znac", t:"t", p:"Výhľad", h:"E-mailový klient od Microsoftu.", a:"Outlook"},
+  {c:"znac", t:"t", p:"Ohnivá líška", h:"Webový prehliadač.", a:"Firefox"},
+  {c:"znac", t:"t", p:"Čierna ostružina", h:"Mobil s fyzickou klávesnicou.", a:"BlackBerry"},
+  {c:"znac", t:"t", p:"Pusti škatuľu", h:"Cloudové úložisko.", a:"Dropbox"},
+  {c:"znac", t:"t", p:"Rýchla encyklopédia", h:"Voľná internetová encyklopédia.", a:"Wikipedia"},
+  {c:"znac", t:"t", p:"Pripni záujem", h:"Sieť s nástenkami nápadov.", a:"Pinterest"},
+  {c:"znac", t:"t", p:"Nafukovacia posteľ a raňajky", h:"Platforma na prenájom ubytovania.", a:"Airbnb"},
+  {c:"znac", t:"t", p:"Tri hviezdy", h:"Kórejský výrobca telefónov.", a:"Samsung"},
+  {c:"znac", t:"t", p:"Tri diamanty", h:"Japonský koncern, autá aj elektronika.", a:"Mitsubishi"},
+  {c:"znac", t:"t", p:"Ľudové auto", h:"Nemecká automobilka.", a:"Volkswagen"},
+  {c:"znac", t:"t", p:"Škriatok", h:"Citrónová limonáda.", a:"Sprite"},
+  {c:"znac", t:"t", p:"Horská rosa", h:"Zelený sýtený nápoj.", a:"Mountain Dew"},
+  {c:"znac", t:"t", p:"Doktor Korenie", h:"Americký sýtený nápoj.", a:"Dr Pepper"},
+  {c:"znac", t:"t", p:"Kuželky", h:"Farebné žuvacie cukríky.", a:"Skittles"},
+  {c:"znac", t:"t", p:"Kráľ hamburgerov", h:"Reťazec rýchleho občerstvenia.", a:"Burger King"},
+  {c:"znac", t:"t", p:"Chata s pizzou", h:"Reťazec pizzérií.", a:"Pizza Hut"},
+  {c:"znac", t:"t", p:"Kentucky vyprážané kura", h:"Reťazec s kuracími krídelkami.", a:"KFC"},
+  {c:"znac", t:"t", p:"Zlaté oblúky", h:"Žlté M na reštauráciách.", a:"McDonald's"},
+
+  {c:"hud", t:"t", p:"Valiace sa kamene", h:"Kapela s Mickom Jaggerom.", a:"Rolling Stones"},
+  {c:"hud", t:"t", p:"Chrobáky", h:"Kapela z Liverpoolu.", a:"The Beatles"},
+  {c:"hud", t:"t", p:"Zbrane a ruže", h:"Rocková kapela s Axlom Roseom.", a:"Guns N' Roses"},
+  {c:"hud", t:"t", p:"Zelený deň", h:"Punková kapela z Kalifornie.", a:"Green Day"},
+  {c:"hud", t:"t", p:"Železná panna", h:"Heavy metalová kapela s maskotom Eddiem.", a:"Iron Maiden"},
+  {c:"hud", t:"t", p:"Hlboká fialová", h:"Rocková kapela s hitom Smoke on the Water.", a:"Deep Purple"},
+  {c:"hud", t:"t", p:"Predstav si draky", h:"Kapela s hitom Believer.", a:"Imagine Dragons"},
+  {c:"hud", t:"t", p:"Arktické opice", h:"Britská indie kapela.", a:"Arctic Monkeys"},
+  {c:"hud", t:"t", p:"Červené pálivé čili papričky", h:"Kapela s Anthonym Kiedisom.", a:"Red Hot Chili Peppers"},
+  {c:"hud", t:"t", p:"Gaštanová päťka", h:"Kapela Adama Levinea.", a:"Maroon 5"},
+  {c:"hud", t:"t", p:"Elektráreň", h:"Nemecká priekopnícka elektronická skupina.", a:"Kraftwerk"},
+  {c:"hud", t:"t", p:"Tresk!", h:"Duo George Michael a Andrew Ridgeley.", a:"Wham!"},
+  {c:"hud", t:"t", p:"Studená hra", h:"Kapela Chrisa Martina.", a:"Coldplay"},
+  {c:"hud", t:"t", p:"Baníkovo remeslo", h:"Kockatá hra o ťažbe a stavaní.", a:"Minecraft"},
+  {c:"hud", t:"t", p:"Medzi nami", h:"Hra o podvodníkovi na vesmírnej lodi.", a:"Among Us"},
+  {c:"hud", t:"t", p:"Nočná pevnosť", h:"Battle royale s tancovaním a stavaním.", a:"Fortnite"},
+  {c:"hud", t:"t", p:"Polčas rozpadu", h:"Hra s Gordonom Freemanom a páčidlom.", a:"Half-Life"},
+  {c:"hud", t:"t", p:"Protiúder", h:"Strieľačka teroristov proti protiteroristom.", a:"Counter-Strike"},
+  {c:"hud", t:"t", p:"Spad", h:"Postapokalyptická hra s Vault-Boyom.", a:"Fallout"},
+  {c:"hud", t:"t", p:"Mŕtvy priestor", h:"Vesmírny horor s inžinierom Isaacom.", a:"Dead Space"},
+  {c:"hud", t:"t", p:"Veľká krádež auta", h:"Hra o gangstroch v Los Santos.", a:"Grand Theft Auto"},
+  {c:"hud", t:"t", p:"Vierovyznanie vraha", h:"Hra o asasínoch a templároch.", a:"Assassin's Creed"},
+  {c:"hud", t:"t", p:"Okrádač hrobov", h:"Hra s archeologičkou Larou.", a:"Tomb Raider"},
+  {c:"hud", t:"t", p:"Obyvateľ zla", h:"Zombie horor od Capcomu.", a:"Resident Evil"},
+  {c:"hud", t:"t", p:"Tichý kopec", h:"Horor s hmlou a Pyramid Headom.", a:"Silent Hill"},
+  {c:"hud", t:"t", p:"Smrteľný súboj", h:"Bojovka so Scorpionom a Sub-Zero.", a:"Mortal Kombat"},
+  {c:"hud", t:"t", p:"Rozdrvenie cukríkov", h:"Mobilná hra s farebnými sladkosťami.", a:"Candy Crush"},
+  {c:"hud", t:"t", p:"Zrážka klanov", h:"Mobilná hra o stavaní dediny.", a:"Clash of Clans"},
+  {c:"hud", t:"t", p:"Svet vojnového remesla", h:"Online RPG s Azerothom.", a:"World of Warcraft"},
+  {c:"hud", t:"t", p:"Vreckové príšery", h:"Hra, kde chytáš tvory do guľôčok.", a:"Pokémon"},
+  {c:"hud", t:"t", p:"Vesmírni votrelci", h:"Retro arkáda so strieľaním na votrelcov.", a:"Space Invaders"},
+
+  {c:"mies", t:"t", p:"Anjeli", h:"Mesto v Kalifornii.", a:"Los Angeles"},
+  {c:"mies", t:"t", p:"Úrodné lúky", h:"Mesto hazardu v Nevade.", a:"Las Vegas"},
+  {c:"mies", t:"t", p:"Svätý František", h:"Mesto s mostom Golden Gate.", a:"San Francisco"},
+  {c:"mies", t:"t", p:"Januárová rieka", h:"Brazílske mesto so sochou Krista.", a:"Rio de Janeiro"},
+  {c:"mies", t:"t", p:"Dobré vzduchy", h:"Hlavné mesto Argentíny.", a:"Buenos Aires"},
+  {c:"mies", t:"t", p:"Bohaté pobrežie", h:"Krajina v Strednej Amerike.", a:"Kostarika"},
+  {c:"mies", t:"t", p:"Bohatý prístav", h:"Karibský ostrov patriaci USA.", a:"Portoriko"},
+  {c:"mies", t:"t", p:"Spasiteľ", h:"Najmenšia krajina Strednej Ameriky.", a:"Salvádor"},
+  {c:"mies", t:"t", p:"Levie pohorie", h:"Krajina v západnej Afrike.", a:"Sierra Leone"},
+  {c:"mies", t:"t", p:"Zelená zem", h:"Ostrov, ktorý patrí Dánsku.", a:"Grónsko"},
+  {c:"mies", t:"t", p:"Ľadová zem", h:"Ostrovná krajina so sopkami a gejzírmi.", a:"Island"},
+  {c:"mies", t:"t", p:"Južná zem", h:"Kontinent s kengurami.", a:"Austrália"},
+  {c:"mies", t:"t", p:"Cezmínový les", h:"Štvrť filmového priemyslu v Los Angeles.", a:"Hollywood"},
+  {c:"mies", t:"t", p:"Veľké jablko", h:"Prezývka najľudnatejšieho mesta USA.", a:"New York"},
+  {c:"mies", t:"t", p:"Múrová ulica", h:"Finančné centrum New Yorku.", a:"Wall Street"},
+  {c:"mies", t:"t", p:"Široká cesta", h:"Ulica s divadlami v New Yorku.", a:"Broadway"},
+  {c:"mies", t:"t", p:"Žltý kameň", h:"Najstarší národný park USA.", a:"Yellowstone"},
+  {c:"mies", t:"t", p:"Západný kláštor", h:"Londýnske opátstvo pri parlamente.", a:"Westminster"},
+  {c:"mies", t:"t", p:"Naša Pani", h:"Katedrála v Paríži.", a:"Notre-Dame"},
+  {c:"mies", t:"t", p:"Červený mlyn", h:"Parížsky kabaret.", a:"Moulin Rouge"},
+  {c:"mies", t:"t", p:"Biela hora", h:"Najvyšší vrch Álp.", a:"Mont Blanc"},
+  {c:"mies", t:"t", p:"Azúrové pobrežie", h:"Francúzska riviéra.", a:"Côte d'Azur"},
+  {c:"mies", t:"t", p:"Nový labutí kameň", h:"Bavorský rozprávkový zámok.", a:"Neuschwanstein"},
+  {c:"mies", t:"t", p:"Krásna studnia", h:"Cisársky zámok vo Viedni.", a:"Schönbrunn"},
+  {c:"mies", t:"t", p:"Svätá múdrosť", h:"Istanbulský chrám a múzeum.", a:"Hagia Sophia"},
+  {c:"mies", t:"t", p:"Svätá rodina", h:"Gaudího nedokončená bazilika v Barcelone.", a:"Sagrada Família"},
+  {c:"mies", t:"t", p:"Zasnežené pohorie", h:"Španielske pohorie s lyžovaním.", a:"Sierra Nevada"},
+  {c:"mies", t:"t", p:"Slnečné pobrežie", h:"Španielske letovisko pri Malage.", a:"Costa del Sol"},
+  {c:"mies", t:"t", p:"Karlov vrch", h:"Mesto s kasínom a Formulou 1.", a:"Monte Carlo"},
+  {c:"mies", t:"t", p:"Levie mesto", h:"Mestský štát v juhovýchodnej Ázii.", a:"Singapur"},
+  {c:"mies", t:"t", p:"Voňavý prístav", h:"Bývalá britská kolónia v Číne.", a:"Hongkong"},
+  {c:"mies", t:"t", p:"Východná metropola", h:"Hlavné mesto Japonska.", a:"Tokio"},
+  {c:"mies", t:"t", p:"Severná metropola", h:"Hlavné mesto Číny.", a:"Peking"},
+  {c:"mies", t:"t", p:"Nad morom", h:"Najväčšie čínske mesto na pobreží.", a:"Šanghaj"},
+  {c:"mies", t:"t", p:"Malé Benátky", h:"Juhoamerická krajina s vodopádom Angel.", a:"Venezuela"},
+  {c:"mies", t:"t", p:"Strieborná zem", h:"Krajina tanga a Messiho.", a:"Argentína"},
+  {c:"mies", t:"t", p:"Rovník", h:"Juhoamerická krajina s Galapágami.", a:"Ekvádor"},
+  {c:"mies", t:"t", p:"Plytké more", h:"Karibské súostrovie.", a:"Bahamy"},
+  {c:"mies", t:"t", p:"Bradatí", h:"Karibský ostrov, domov Rihanny.", a:"Barbados"},
+  {c:"mies", t:"t", p:"Kvetnatá", h:"Slnečný štát s Disney Worldom.", a:"Florida"},
+  {c:"mies", t:"t", p:"Zem čistých", h:"Krajina v južnej Ázii.", a:"Pakistan"},
+  {c:"mies", t:"t", p:"Pennove lesy", h:"Americký štát s Philadelphiou.", a:"Pennsylvania"},
+  {c:"mies", t:"t", p:"Mariina zem", h:"Americký štát pri Chesapeake.", a:"Maryland"},
+  {c:"mies", t:"t", p:"Panenská", h:"Americký štát pomenovaný po anglickej kráľovnej.", a:"Virginia"},
+  {c:"mies", t:"t", p:"Zelený mys", h:"Súostrovie pri Afrike.", a:"Kapverdy"},
+  {c:"mies", t:"t", p:"Žiarivý ostrov", h:"Ostrov pri Indii.", a:"Srí Lanka"},
+
+  {c:"znac", ty:["sla"], p:"Mekáč", h:"Reštaurácia, začína na M.", a:"McDonald's"},
+  {c:"znac", ty:["sla"], p:"Kefíčko", h:"Reštaurácia, začína na K.", a:"KFC"},
+  {c:"znac", ty:["sla"], p:"Fejs", h:"Sociálna sieť, začína na F.", a:"Facebook"},
+  {c:"znac", ty:["sla"], p:"Insta", h:"Sociálna sieť, začína na I.", a:"Instagram"},
+  {c:"znac", ty:["sla"], p:"Plejko", h:"Herná konzola, začína na P.", a:"PlayStation"},
+  {c:"znac", ty:["sla"], p:"Kaufko", h:"Obchod, začína na K.", a:"Kaufland"},
+  {c:"znac", ty:["sla"], p:"Bavorák", h:"Auto, začína na B.", a:"BMW"},
+  {c:"znac", ty:["sla"], p:"Meďák", h:"Auto, začína na M.", a:"Mercedes"},
+  {c:"znac", ty:["sla"], p:"Oktávka", h:"Auto, začína na Š.", a:"Škoda Octavia"},
+  {c:"znac", ty:["sla"], p:"Chrobák", h:"Auto, začína na V.", a:"Volkswagen Beetle"},
+  {c:"znac", ty:["sla"], p:"Kačica", h:"Auto, začína na C.", a:"Citroën 2CV"},
+  {c:"znac", ty:["sla"], p:"Harlejka", h:"Motorka, začína na H.", a:"Harley-Davidson"},
+  {c:"znac", ty:["sla"], p:"Nahryznuté jablko", h:"Značka, začína na A.", a:"Apple"},
+  {c:"znac", ty:["sla"], p:"Modrý vtáčik", h:"Sociálna sieť, začína na T.", a:"Twitter"},
+  {c:"osob", ty:["sla"], p:"Kráľ popu", h:"Spevák, začína na M.", a:"Michael Jackson"},
+  {c:"osob", ty:["sla"], p:"Kráľ rokenrolu", h:"Spevák, začína na E.", a:"Elvis Presley"},
+  {c:"osob", ty:["sla"], p:"Arnie", h:"Herec, začína na A.", a:"Arnold Schwarzenegger"},
+  {c:"osob", ty:["sla"], p:"Skala", h:"Herec, začína na D.", a:"Dwayne Johnson"},
+  {c:"osob", ty:["sla"], p:"Boss", h:"Spevák, začína na B.", a:"Bruce Springsteen"},
+  {c:"osob", ty:["sla"], p:"Slim Shady", h:"Raper, začína na E.", a:"Eminem"},
+  {c:"osob", ty:["sla"], p:"CR7", h:"Futbalista, začína na C.", a:"Cristiano Ronaldo"},
+  {c:"osob", ty:["sla"], p:"Blcha", h:"Futbalista, začína na L.", a:"Lionel Messi"},
+  {c:"osob", ty:["sla"], p:"Božia ruka", h:"Futbalista, začína na D.", a:"Diego Maradona"},
+  {c:"osob", ty:["sla"], p:"Železný Mike", h:"Boxer, začína na M.", a:"Mike Tyson"},
+  {c:"osob", ty:["sla"], p:"Jeho vzdušnosť", h:"Basketbalista, začína na M.", a:"Michael Jordan"},
+  {c:"osob", ty:["sla"], p:"Čierna mamba", h:"Basketbalista, začína na K.", a:"Kobe Bryant"},
+  {c:"osob", ty:["sla"], p:"Kráľ James", h:"Basketbalista, začína na L.", a:"LeBron James"},
+  {c:"osob", ty:["sla"], p:"Ibra", h:"Futbalista, začína na Z.", a:"Zlatan Ibrahimović"},
+  {c:"osob", ty:["sla"], p:"Železná lady", h:"Politička, začína na M.", a:"Margaret Thatcher"},
+  {c:"osob", ty:["sla"], p:"Kráľovná popu", h:"Speváčka, začína na M.", a:"Madonna"},
+  {c:"osob", ty:["sla"], p:"Princ temnôt", h:"Spevák, začína na O.", a:"Ozzy Osbourne"},
+  {c:"osob", ty:["sla"], p:"Queen B", h:"Speváčka, začína na B.", a:"Beyoncé"},
+  {c:"osob", ty:["sla"], p:"RiRi", h:"Speváčka, začína na R.", a:"Rihanna"},
+  {c:"osob", ty:["sla"], p:"J.Lo", h:"Speváčka, začína na J.", a:"Jennifer Lopez"},
+  {c:"osob", ty:["sla"], p:"Schumi", h:"Pretekár, začína na M.", a:"Michael Schumacher"},
+  {c:"osob", ty:["sla"], p:"Kaiser", h:"Futbalista, začína na F.", a:"Franz Beckenbauer"},
+  {c:"film", ty:["sla"], p:"Agent 007", h:"Filmová postava, začína na J.", a:"James Bond"},
+  {c:"film", ty:["sla"], p:"Muž z ocele", h:"Superhrdina, začína na S.", a:"Superman"},
+  {c:"film", ty:["sla"], p:"Temný rytier", h:"Superhrdina, začína na B.", a:"Batman"},
+  {c:"film", ty:["sla"], p:"Chlapec, ktorý prežil", h:"Filmová postava, začína na H.", a:"Harry Potter"},
+  {c:"film", ty:["sla"], p:"Ten, koho neslobodno menovať", h:"Filmová postava, začína na V.", a:"Voldemort"},
+  {c:"film", ty:["sla"], p:"Matka drakov", h:"Seriálová postava, začína na D.", a:"Daenerys Targaryen"},
+  {c:"film", ty:["sla"], p:"Kapitán Čiernej perly", h:"Filmová postava, začína na J.", a:"Jack Sparrow"},
+  {c:"film", ty:["sla"], p:"Priateľský sused", h:"Superhrdina, začína na S.", a:"Spider-Man"},
+  {c:"film", ty:["sla"], p:"Heisenberg", h:"Seriálová postava, začína na W.", a:"Walter White"},
+  {c:"film", ty:["sla"], p:"Boh hromu", h:"Superhrdina, začína na T.", a:"Thor"},
+  {c:"mies", ty:["sla"], p:"Mesto hriechu", h:"Mesto, začína na L.", a:"Las Vegas"},
+  {c:"mies", ty:["sla"], p:"Večné mesto", h:"Mesto, začína na R.", a:"Rím"},
+  {c:"mies", ty:["sla"], p:"Mesto svetiel", h:"Mesto, začína na P.", a:"Paríž"},
+  {c:"mies", ty:["sla"], p:"Stovežatá", h:"Mesto, začína na P.", a:"Praha"},
+  {c:"mies", ty:["sla"], p:"Krásavica na Dunaji", h:"Mesto, začína na B.", a:"Bratislava"},
+  {c:"mies", ty:["sla"], p:"Krajina vychádzajúceho slnka", h:"Krajina, začína na J.", a:"Japonsko"},
+  {c:"mies", ty:["sla"], p:"Zelený ostrov", h:"Krajina, začína na Í.", a:"Írsko"},
+  {c:"mies", ty:["sla"], p:"Krajina tisícich jazier", h:"Krajina, začína na F.", a:"Fínsko"},
+  {c:"mies", ty:["sla"], p:"Čižma", h:"Krajina, začína na T.", a:"Taliansko"},
+  {c:"mies", ty:["sla"], p:"Krajina javorového listu", h:"Krajina, začína na K.", a:"Kanada"},
+  {c:"mies", ty:["sla"], p:"Ríša stredu", h:"Krajina, začína na Č.", a:"Čína"},
+  {c:"mies", ty:["sla"], p:"Strecha sveta", h:"Územie, začína na T.", a:"Tibet"},
+  {c:"mies", ty:["sla"], p:"Čierny kontinent", h:"Kontinent, začína na A.", a:"Afrika"},
+  {c:"mies", ty:["sla"], p:"Krajina tulipánov", h:"Krajina, začína na H.", a:"Holandsko"},
+  {c:"mies", ty:["sla"], p:"Mesto anjelov", h:"Mesto, začína na L.", a:"Los Angeles"},
+  {c:"hud", ty:["sla"], p:"Liverpoolska štvorka", h:"Kapela, začína na B.", a:"The Beatles"},
+  {c:"hud", ty:["sla"], p:"Depešáci", h:"Kapela, začína na D.", a:"Depeche Mode"},
+  {c:"hud", ty:["sla"], p:"Stouni", h:"Kapela, začína na R.", a:"Rolling Stones"},
+  {c:"hud", ty:["sla"], p:"Metla", h:"Kapela, začína na M.", a:"Metallica"},
+  {c:"hud", ty:["sla"], p:"Céeska", h:"Hra, začína na C.", a:"Counter-Strike"},
+  {c:"hud", ty:["sla"], p:"Géteáčko", h:"Hra, začína na G.", a:"Grand Theft Auto"},
+  {c:"hud", ty:["sla"], p:"WoWko", h:"Hra, začína na W.", a:"World of Warcraft"},
+  {c:"hud", ty:["sla"], p:"LoLko", h:"Hra, začína na L.", a:"League of Legends"},
+
+  {c:"film", ty:["opi"], p:"Žltá huba v nohaviciach, ktorá býva v ananáse pod morom.", h:"Rozprávka, začína na S.", a:"SpongeBob"},
+  {c:"film", ty:["opi"], p:"Zelený zlobor, ktorý žije v močiari s ukecaným somárom.", h:"Rozprávka, začína na S.", a:"Shrek"},
+  {c:"film", ty:["opi"], p:"Loď, ktorá sa na prvej plavbe zrazila s ľadovcom.", h:"Film, začína na T.", a:"Titanic"},
+  {c:"film", ty:["opi"], p:"Chlapec ostane cez Vianoce bez rodiny a bráni dom pred dvoma zlodejmi.", h:"Film, začína na S.", a:"Sám doma"},
+  {c:"film", ty:["opi"], p:"Rybí otec hľadá cez celý oceán strateného syna.", h:"Rozprávka, začína na H.", a:"Hľadá sa Nemo"},
+  {c:"film", ty:["opi"], p:"Štyria chlapi lovia v New Yorku strašidlá.", h:"Film, začína na K.", a:"Krotitelia duchov"},
+  {c:"film", ty:["opi"], p:"Učiteľ chémie začne variť drogy.", h:"Seriál, začína na B.", a:"Breaking Bad"},
+  {c:"film", ty:["opi"], p:"Šiesti kamaráti vysedávajú v kaviarni Central Perk.", h:"Seriál, začína na P.", a:"Priatelia"},
+  {c:"film", ty:["opi"], p:"Žltá rodina zo Springfieldu.", h:"Seriál, začína na S.", a:"Simpsonovci"},
+  {c:"film", ty:["opi"], p:"Malý tvor nesie šperk do sopky.", h:"Film, začína na P.", a:"Pán prsteňov"},
+  {c:"film", ty:["opi"], p:"Archeológ s klobúkom a bičom.", h:"Film, začína na I.", a:"Indiana Jones"},
+  {c:"film", ty:["opi"], p:"Stroj z budúcnosti prišiel zabiť matku budúceho vodcu.", h:"Film, začína na T.", a:"Terminátor"},
+  {c:"film", ty:["opi"], p:"Miliardár v kovovom obleku s reaktorom v hrudi.", h:"Superhrdina, začína na I.", a:"Iron Man"},
+  {c:"film", ty:["opi"], p:"Pravekí jašteri ožijú v zábavnom areáli.", h:"Film, začína na J.", a:"Jurský park"},
+  {c:"film", ty:["opi"], p:"Muž sedí na lavičke s bonboniérou a rozpráva svoj život.", h:"Film, začína na F.", a:"Forrest Gump"},
+  {c:"osob", ty:["opi"], p:"Rakúsky kulturista, ktorý bol guvernérom Kalifornie.", h:"Herec, začína na A.", a:"Arnold Schwarzenegger"},
+  {c:"osob", ty:["opi"], p:"Spevák v bielej rukavici, ktorý tancoval mesačnú chôdzu.", h:"Spevák, začína na M.", a:"Michael Jackson"},
+  {c:"osob", ty:["opi"], p:"Portugalský futbalista so sedmičkou na chrbte.", h:"Futbalista, začína na C.", a:"Cristiano Ronaldo"},
+  {c:"osob", ty:["opi"], p:"Švédske dievča, ktoré štrajkovalo za klímu.", h:"Aktivistka, začína na G.", a:"Greta Thunberg"},
+  {c:"osob", ty:["opi"], p:"Fyzik s vyplazeným jazykom a strapatými vlasmi.", h:"Vedec, začína na A.", a:"Albert Einstein"},
+  {c:"osob", ty:["opi"], p:"Maliar slnečníc, ktorý si odrezal ucho.", h:"Maliar, začína na V.", a:"Vincent van Gogh"},
+  {c:"osob", ty:["opi"], p:"Britský komik, ktorý takmer nehovorí a má plyšového medvedíka.", h:"Postava, začína na M.", a:"Mr. Bean"},
+  {c:"osob", ty:["opi"], p:"Jamajčan, ktorý zabehol stovku za 9,58 sekundy.", h:"Športovec, začína na U.", a:"Usain Bolt"},
+  {c:"osob", ty:["opi"], p:"Speváčka, ktorá prišla na odovzdávanie cien v šatách z mäsa.", h:"Speváčka, začína na L.", a:"Lady Gaga"},
+  {c:"znac", ty:["opi"], p:"Švédsky obchod, kde si nábytok skladáš sám.", h:"Obchod, začína na I.", a:"IKEA"},
+  {c:"znac", ty:["opi"], p:"Dánske kocky, na ktoré nechceš stúpiť bosý.", h:"Hračka, začína na L.", a:"Lego"},
+  {c:"znac", ty:["opi"], p:"Hnedý sýtený nápoj v červenej plechovke.", h:"Nápoj, začína na C.", a:"Coca-Cola"},
+  {c:"znac", ty:["opi"], p:"Aplikácia, kde ťaháš prstom doprava alebo doľava.", h:"Aplikácia, začína na T.", a:"Tinder"},
+  {c:"znac", ty:["opi"], p:"Platforma s krátkymi tanečnými videami.", h:"Aplikácia, začína na T.", a:"TikTok"},
+  {c:"znac", ty:["opi"], p:"Elektrické autá s falcon dverami.", h:"Auto, začína na T.", a:"Tesla"},
+  {c:"znac", ty:["opi"], p:"Lieskovoorieškový krém na chlieb.", h:"Jedlo, začína na N.", a:"Nutella"},
+  {c:"znac", ty:["opi"], p:"Fínsky mobil, ktorý prežije aj pád z paneláku.", h:"Telefón, začína na N.", a:"Nokia 3310"},
+  {c:"mies", ty:["opi"], p:"Železná veža v Paríži.", h:"Pamiatka, začína na E.", a:"Eiffelova veža"},
+  {c:"mies", ty:["opi"], p:"Naklonená zvonica v Taliansku.", h:"Pamiatka, začína na Š.", a:"Šikmá veža v Pise"},
+  {c:"mies", ty:["opi"], p:"Mesto na vode s gondolami.", h:"Mesto, začína na B.", a:"Benátky"},
+  {c:"mies", ty:["opi"], p:"Najvyšší vrch sveta.", h:"Hora, začína na M.", a:"Mount Everest"},
+  {c:"mies", ty:["opi"], p:"Dlhé kamenné opevnenie na severe Číny.", h:"Pamiatka, začína na V.", a:"Veľký čínsky múr"},
+  {c:"mies", ty:["opi"], p:"Zelená dáma s pochodňou pri New Yorku.", h:"Pamiatka, začína na S.", a:"Socha slobody"},
+  {c:"mies", ty:["opi"], p:"Trojuholníkové hrobky faraónov.", h:"Pamiatka, začína na P.", a:"Pyramídy v Gíze"},
+  {c:"hud", ty:["opi"], p:"Inštalatér s fúzmi, ktorý skáče na korytnačky.", h:"Hra, začína na S.", a:"Super Mario"},
+  {c:"hud", ty:["opi"], p:"Žltý kruh, ktorý žerie bodky a uteká pred duchmi.", h:"Hra, začína na P.", a:"Pac-Man"},
+  {c:"hud", ty:["opi"], p:"Padajúce kocky, ktoré skladáš do riadkov.", h:"Hra, začína na T.", a:"Tetris"},
+  {c:"hud", ty:["opi"], p:"Modrý ježko, ktorý beží veľmi rýchlo.", h:"Hra, začína na S.", a:"Sonic"},
+  {c:"hud", ty:["opi"], p:"Štyria Švédi, ktorí vyhrali Eurovíziu s piesňou Waterloo.", h:"Kapela, začína na A.", a:"ABBA"},
+  {c:"hud", ty:["opi"], p:"Kórejská pieseň s tancom ako jazda na koni.", h:"Pieseň, začína na G.", a:"Gangnam Style"},
+
+  {c:"film", ty:["emo"], p:"🕷️👨", h:"Superhrdina, začína na S.", a:"Spider-Man"},
+  {c:"film", ty:["emo"], p:"🦇👨", h:"Superhrdina, začína na B.", a:"Batman"},
+  {c:"film", ty:["emo"], p:"👸❄️⛄", h:"Rozprávka, začína na Ľ.", a:"Ľadové kráľovstvo"},
+  {c:"film", ty:["emo"], p:"🦁👑", h:"Rozprávka, začína na L.", a:"Leví kráľ"},
+  {c:"film", ty:["emo"], p:"🚢🧊💔", h:"Film, začína na T.", a:"Titanic"},
+  {c:"film", ty:["emo"], p:"👻🚫", h:"Film, začína na K.", a:"Krotitelia duchov"},
+  {c:"film", ty:["emo"], p:"🧙‍♂️💍🌋", h:"Film, začína na P.", a:"Pán prsteňov"},
+  {c:"film", ty:["emo"], p:"⚡👓🧙", h:"Film, začína na H.", a:"Harry Potter"},
+  {c:"film", ty:["emo"], p:"🦖🏞️", h:"Film, začína na J.", a:"Jurský park"},
+  {c:"film", ty:["emo"], p:"🐠🔍", h:"Rozprávka, začína na H.", a:"Hľadá sa Nemo"},
+  {c:"film", ty:["emo"], p:"🏠👦🎄", h:"Film, začína na S.", a:"Sám doma"},
+  {c:"film", ty:["emo"], p:"👽📞🏠", h:"Film, začína na E.", a:"E.T. Mimozemšťan"},
+  {c:"film", ty:["emo"], p:"🤖🚗", h:"Film, začína na T.", a:"Transformers"},
+  {c:"film", ty:["emo"], p:"🐼🥋", h:"Rozprávka, začína na K.", a:"Kung Fu Panda"},
+  {c:"film", ty:["emo"], p:"🐀👨‍🍳", h:"Rozprávka, začína na R.", a:"Ratatouille"},
+  {c:"film", ty:["emo"], p:"🎈🏠👴", h:"Rozprávka, začína na H.", a:"Hore"},
+  {c:"film", ty:["emo"], p:"🧸🤠🚀", h:"Rozprávka, začína na T.", a:"Toy Story"},
+  {c:"film", ty:["emo"], p:"🏴‍☠️💀🌊", h:"Film, začína na P.", a:"Piráti z Karibiku"},
+  {c:"film", ty:["emo"], p:"🦈🌊", h:"Film, začína na Č.", a:"Čeľuste"},
+  {c:"film", ty:["emo"], p:"🥊🐯", h:"Film, začína na R.", a:"Rocky"},
+  {c:"film", ty:["emo"], p:"🕶️💊🐇", h:"Film, začína na M.", a:"Matrix"},
+  {c:"film", ty:["emo"], p:"⭐⚔️", h:"Film, začína na S.", a:"Star Wars"},
+  {c:"film", ty:["emo"], p:"🐒🌍", h:"Film, začína na P.", a:"Planéta opíc"},
+  {c:"film", ty:["emo"], p:"🚗⚡⏰", h:"Film, začína na N.", a:"Návrat do budúcnosti"},
+  {c:"film", ty:["emo"], p:"🍫🏭", h:"Film, začína na C.", a:"Charlie a továreň na čokoládu"},
+  {c:"znac", ty:["emo"], p:"🔴🐂", h:"Nápoj, začína na R.", a:"Red Bull"},
+  {c:"znac", ty:["emo"], p:"🪟💻", h:"Softvér, začína na W.", a:"Windows"},
+  {c:"znac", ty:["emo"], p:"🔥🦊", h:"Softvér, začína na F.", a:"Firefox"},
+  {c:"znac", ty:["emo"], p:"⭐💵☕", h:"Kaviareň, začína na S.", a:"Starbucks"},
+  {c:"znac", ty:["emo"], p:"👑🍔", h:"Reštaurácia, začína na B.", a:"Burger King"},
+  {c:"znac", ty:["emo"], p:"🐚⛽", h:"Značka, začína na S.", a:"Shell"},
+  {c:"znac", ty:["emo"], p:"🐆👟", h:"Značka, začína na P.", a:"Puma"},
+  {c:"znac", ty:["emo"], p:"🐊👕", h:"Značka, začína na L.", a:"Lacoste"},
+  {c:"znac", ty:["emo"], p:"🐎🏎️", h:"Auto, začína na F.", a:"Ferrari"},
+  {c:"znac", ty:["emo"], p:"🐂🏎️", h:"Auto, začína na L.", a:"Lamborghini"},
+  {c:"znac", ty:["emo"], p:"🦁🚗", h:"Auto, začína na P.", a:"Peugeot"},
+  {c:"znac", ty:["emo"], p:"🍎📱", h:"Telefón, začína na I.", a:"iPhone"},
+  {c:"mies", ty:["emo"], p:"🗽🍎", h:"Mesto, začína na N.", a:"New York"},
+  {c:"mies", ty:["emo"], p:"🗼🥐", h:"Mesto, začína na P.", a:"Paríž"},
+  {c:"mies", ty:["emo"], p:"🍕🏛️", h:"Mesto, začína na R.", a:"Rím"},
+  {c:"mies", ty:["emo"], p:"🎡☕🌧️", h:"Mesto, začína na L.", a:"Londýn"},
+  {c:"mies", ty:["emo"], p:"🗻🍣", h:"Krajina, začína na J.", a:"Japonsko"},
+  {c:"mies", ty:["emo"], p:"🦘🏄", h:"Krajina, začína na A.", a:"Austrália"},
+  {c:"mies", ty:["emo"], p:"🌷🚲🧀", h:"Krajina, začína na H.", a:"Holandsko"},
+  {c:"mies", ty:["emo"], p:"🍁🏒", h:"Krajina, začína na K.", a:"Kanada"},
+  {c:"mies", ty:["emo"], p:"🐫🔺", h:"Krajina, začína na E.", a:"Egypt"},
+  {c:"mies", ty:["emo"], p:"🌮🌵", h:"Krajina, začína na M.", a:"Mexiko"},
+  {c:"mies", ty:["emo"], p:"💃🐂", h:"Krajina, začína na Š.", a:"Španielsko"},
+  {c:"mies", ty:["emo"], p:"⛷️🧀🍫⌚", h:"Krajina, začína na Š.", a:"Švajčiarsko"},
+  {c:"mies", ty:["emo"], p:"🎰🌵", h:"Mesto, začína na L.", a:"Las Vegas"},
+  {c:"mies", ty:["emo"], p:"🧊🌋", h:"Krajina, začína na I.", a:"Island"},
+  {c:"mies", ty:["emo"], p:"🐉🧱", h:"Krajina, začína na Č.", a:"Čína"},
+  {c:"hud", ty:["emo"], p:"🎸🌹🔫", h:"Kapela, začína na G.", a:"Guns N' Roses"},
+  {c:"hud", ty:["emo"], p:"👸🎤", h:"Kapela, začína na Q.", a:"Queen"},
+  {c:"hud", ty:["emo"], p:"🪲🪲🪲🪲", h:"Kapela, začína na B.", a:"The Beatles"},
+  {c:"hud", ty:["emo"], p:"🔴🔥🌶️", h:"Kapela, začína na R.", a:"Red Hot Chili Peppers"},
+  {c:"hud", ty:["emo"], p:"🥶▶️", h:"Kapela, začína na C.", a:"Coldplay"},
+  {c:"hud", ty:["emo"], p:"💭🐉", h:"Kapela, začína na I.", a:"Imagine Dragons"},
+  {c:"hud", ty:["emo"], p:"⛏️🟫", h:"Hra, začína na M.", a:"Minecraft"},
+  {c:"hud", ty:["emo"], p:"🚗💰🔫", h:"Hra, začína na G.", a:"Grand Theft Auto"},
+  {c:"hud", ty:["emo"], p:"🍄👨‍🔧", h:"Hra, začína na S.", a:"Super Mario"},
+  {c:"hud", ty:["emo"], p:"🟡👻", h:"Hra, začína na P.", a:"Pac-Man"},
+  {c:"hud", ty:["emo"], p:"😡🐦", h:"Hra, začína na A.", a:"Angry Birds"},
+  {c:"hud", ty:["emo"], p:"🍬💥", h:"Hra, začína na C.", a:"Candy Crush"},
+  {c:"hud", ty:["emo"], p:"🧱⬇️", h:"Hra, začína na T.", a:"Tetris"},
+  {c:"hud", ty:["emo"], p:"🦔💨", h:"Hra, začína na S.", a:"Sonic"},
+
+  {c:"film", ty:["rev"], p:"Namtab", h:"Superhrdina, začína na B.", a:"Batman"},
+  {c:"film", ty:["rev"], p:"Kerhs", h:"Rozprávka, začína na S.", a:"Shrek"},
+  {c:"film", ty:["rev"], p:"Ratava", h:"Film, začína na A.", a:"Avatar"},
+  {c:"film", ty:["rev"], p:"Cinatit", h:"Film, začína na T.", a:"Titanic"},
+  {c:"film", ty:["rev"], p:"Rekoj", h:"Film, začína na J.", a:"Joker"},
+  {c:"film", ty:["rev"], p:"Kluh", h:"Superhrdina, začína na H.", a:"Hulk"},
+  {c:"film", ty:["rev"], p:"Roht", h:"Superhrdina, začína na T.", a:"Thor"},
+  {c:"film", ty:["rev"], p:"Rettop Yrrah", h:"Film, začína na H.", a:"Harry Potter"},
+  {c:"film", ty:["rev"], p:"Obmar", h:"Film, začína na R.", a:"Rambo"},
+  {c:"film", ty:["rev"], p:"Xirtam", h:"Film, začína na M.", a:"Matrix"},
+  {c:"osob", ty:["rev"], p:"Annodam", h:"Speváčka, začína na M.", a:"Madonna"},
+  {c:"osob", ty:["rev"], p:"Arikahs", h:"Speváčka, začína na S.", a:"Shakira"},
+  {c:"osob", ty:["rev"], p:"Annahir", h:"Speváčka, začína na R.", a:"Rihanna"},
+  {c:"osob", ty:["rev"], p:"Menime", h:"Raper, začína na E.", a:"Eminem"},
+  {c:"osob", ty:["rev"], p:"Eleda", h:"Speváčka, začína na A.", a:"Adele"},
+  {c:"osob", ty:["rev"], p:"Issem", h:"Futbalista, začína na M.", a:"Messi"},
+  {c:"osob", ty:["rev"], p:"Odlanor", h:"Futbalista, začína na R.", a:"Ronaldo"},
+  {c:"osob", ty:["rev"], p:"Ttip Darb", h:"Herec, začína na B.", a:"Brad Pitt"},
+  {c:"osob", ty:["rev"], p:"Agag Ydal", h:"Speváčka, začína na L.", a:"Lady Gaga"},
+  {c:"znac", ty:["rev"], p:"Alset", h:"Auto, začína na T.", a:"Tesla"},
+  {c:"znac", ty:["rev"], p:"Elgoog", h:"Značka, začína na G.", a:"Google"},
+  {c:"znac", ty:["rev"], p:"Xilften", h:"Značka, začína na N.", a:"Netflix"},
+  {c:"znac", ty:["rev"], p:"Koobecaf", h:"Sociálna sieť, začína na F.", a:"Facebook"},
+  {c:"znac", ty:["rev"], p:"Ebutuoy", h:"Značka, začína na Y.", a:"YouTube"},
+  {c:"znac", ty:["rev"], p:"Margatsni", h:"Sociálna sieť, začína na I.", a:"Instagram"},
+  {c:"znac", ty:["rev"], p:"Nozama", h:"Značka, začína na A.", a:"Amazon"},
+  {c:"znac", ty:["rev"], p:"Aikon", h:"Telefón, začína na N.", a:"Nokia"},
+  {c:"znac", ty:["rev"], p:"Ogel", h:"Hračka, začína na L.", a:"Lego"},
+  {c:"znac", ty:["rev"], p:"Aeki", h:"Obchod, začína na I.", a:"Ikea"},
+  {c:"znac", ty:["rev"], p:"Sadida", h:"Značka, začína na A.", a:"Adidas"},
+  {c:"znac", ty:["rev"], p:"Ispep", h:"Nápoj, začína na P.", a:"Pepsi"},
+  {c:"znac", ty:["rev"], p:"Atnaf", h:"Nápoj, začína na F.", a:"Fanta"},
+  {c:"znac", ty:["rev"], p:"Atoyot", h:"Auto, začína na T.", a:"Toyota"},
+  {c:"mies", ty:["rev"], p:"Žírap", h:"Mesto, začína na P.", a:"Paríž"},
+  {c:"mies", ty:["rev"], p:"Nýdnol", h:"Mesto, začína na L.", a:"Londýn"},
+  {c:"mies", ty:["rev"], p:"Oikot", h:"Mesto, začína na T.", a:"Tokio"},
+  {c:"mies", ty:["rev"], p:"Mír", h:"Mesto, začína na R.", a:"Rím"},
+  {c:"mies", ty:["rev"], p:"Aharp", h:"Mesto, začína na P.", a:"Praha"},
+  {c:"mies", ty:["rev"], p:"Jabud", h:"Mesto, začína na D.", a:"Dubaj"},
+  {c:"mies", ty:["rev"], p:"Dirdam", h:"Mesto, začína na M.", a:"Madrid"},
+  {c:"mies", ty:["rev"], p:"Abuk", h:"Krajina, začína na K.", a:"Kuba"},
+  {c:"mies", ty:["rev"], p:"Tpyge", h:"Krajina, začína na E.", a:"Egypt"},
+  {c:"hud", ty:["rev"], p:"Oiram", h:"Hra, začína na M.", a:"Mario"},
+  {c:"hud", ty:["rev"], p:"Sirtet", h:"Hra, začína na T.", a:"Tetris"},
+  {c:"hud", ty:["rev"], p:"Neeuq", h:"Kapela, začína na Q.", a:"Queen"},
+  {c:"hud", ty:["rev"], p:"Anavrin", h:"Kapela, začína na N.", a:"Nirvana"},
+  {c:"hud", ty:["rev"], p:"Etintrof", h:"Hra, začína na F.", a:"Fortnite"},
+
+  {c:"film", ty:["emo"], p:"🐺7️⃣🐐", h:"Rozprávka, začína na V.", a:"Vlk a sedem kozliatok"},
+  {c:"film", ty:["emo"], p:"3️⃣🐷🐺", h:"Rozprávka, začína na T.", a:"Tri prasiatka"},
+  {c:"film", ty:["emo"], p:"👸🫛🛏️", h:"Rozprávka, začína na P.", a:"Princezná na hrášku"},
+  {c:"film", ty:["emo"], p:"👧🔴🧺🐺", h:"Rozprávka, začína na Č.", a:"Červená čiapočka"},
+  {c:"film", ty:["emo"], p:"👸🍎😴", h:"Rozprávka, začína na S.", a:"Snehulienka"},
+  {c:"film", ty:["emo"], p:"👠🎃🕛", h:"Rozprávka, začína na P.", a:"Popoluška"},
+  {c:"film", ty:["emo"], p:"🧜‍♀️🌊", h:"Rozprávka, začína na M.", a:"Malá morská víla"},
+  {c:"film", ty:["emo"], p:"🤥👃🪵", h:"Rozprávka, začína na P.", a:"Pinocchio"},
+  {c:"film", ty:["emo"], p:"🧞‍♂️🪔", h:"Rozprávka, začína na A.", a:"Aladin"},
+  {c:"film", ty:["emo"], p:"🐘👂✈️", h:"Rozprávka, začína na D.", a:"Dumbo"},
+  {c:"film", ty:["emo"], p:"🦌🌲🦋", h:"Rozprávka, začína na B.", a:"Bambi"},
+  {c:"film", ty:["emo"], p:"🐻🍯", h:"Rozprávka, začína na M.", a:"Macko Pú"},
+  {c:"film", ty:["emo"], p:"🐱👢", h:"Rozprávka, začína na K.", a:"Kocúr v čižmách"},
+  {c:"film", ty:["emo"], p:"🧚✨🏴‍☠️", h:"Rozprávka, začína na P.", a:"Peter Pan"},
+  {c:"film", ty:["emo"], p:"👹🌹🏰", h:"Rozprávka, začína na K.", a:"Kráska a zviera"},
+  {c:"film", ty:["emo"], p:"🐉🏋️‍♂️🎓", h:"Rozprávka, začína na A.", a:"Ako si vycvičiť draka"},
+  {c:"film", ty:["emo"], p:"🐧🕺", h:"Rozprávka, začína na H.", a:"Happy Feet"},
+  {c:"film", ty:["emo"], p:"💛👓🍌", h:"Rozprávka, začína na M.", a:"Mimoni"},
+  {c:"film", ty:["emo"], p:"🧟‍♂️🚶", h:"Seriál, začína na W.", a:"The Walking Dead"},
+  {c:"film", ty:["emo"], p:"👑🗡️🐉❄️", h:"Seriál, začína na H.", a:"Hra o tróny"},
+  {c:"film", ty:["emo"], p:"🧪👨‍🏫💎", h:"Seriál, začína na B.", a:"Breaking Bad"},
+  {c:"film", ty:["emo"], p:"☕🛋️👫👫👫", h:"Seriál, začína na P.", a:"Priatelia"},
+  {c:"film", ty:["emo"], p:"👰💛🗡️", h:"Film, začína na K.", a:"Kill Bill"},
+  {c:"film", ty:["emo"], p:"🦍🏢✈️", h:"Film, začína na K.", a:"King Kong"},
+  {c:"film", ty:["emo"], p:"👨‍🚀🌽🕳️", h:"Film, začína na I.", a:"Interstellar"},
+  {c:"film", ty:["emo"], p:"🧑‍🚀🥔🔴", h:"Film, začína na M.", a:"Marťan"},
+  {c:"film", ty:["emo"], p:"🤡🎈", h:"Horor, začína na T.", a:"To"},
+  {c:"film", ty:["emo"], p:"👧📼📺", h:"Horor, začína na K.", a:"Kruh"},
+  {c:"film", ty:["emo"], p:"🔪🚿", h:"Horor, začína na P.", a:"Psycho"},
+  {c:"film", ty:["emo"], p:"🧛‍♂️🩸🏰", h:"Film, začína na D.", a:"Dracula"},
+  {c:"film", ty:["emo"], p:"🐺🌕❤️🧛", h:"Film, začína na S.", a:"Súmrak"},
+  {c:"film", ty:["emo"], p:"🏹👧🔥", h:"Film, začína na H.", a:"Hry o život"},
+  {c:"film", ty:["emo"], p:"🕵️‍♂️🎻🔍", h:"Postava, začína na S.", a:"Sherlock Holmes"},
+  {c:"film", ty:["emo"], p:"🤵🍸🔫", h:"Postava, začína na J.", a:"James Bond"},
+  {c:"film", ty:["emo"], p:"🤠🐍🏺", h:"Film, začína na I.", a:"Indiana Jones"},
+  {c:"film", ty:["emo"], p:"🥋👦🪰🥢", h:"Film, začína na K.", a:"Karate Kid"},
+  {c:"film", ty:["emo"], p:"💃🕺🍉", h:"Film, začína na H.", a:"Hriešny tanec"},
+  {c:"film", ty:["emo"], p:"👨‍👩‍👧‍👦🟡🍩", h:"Seriál, začína na S.", a:"Simpsonovci"},
+  {c:"film", ty:["emo"], p:"🧽🍍🌊", h:"Rozprávka, začína na S.", a:"SpongeBob"},
+  {c:"film", ty:["emo"], p:"🐢🐢🐢🐢🍕", h:"Rozprávka, začína na K.", a:"Korytnačky Ninja"},
+  {c:"film", ty:["emo"], p:"🐭🐱🔨", h:"Rozprávka, začína na T.", a:"Tom a Jerry"},
+  {c:"film", ty:["emo"], p:"🐶🔍👻🚐", h:"Rozprávka, začína na S.", a:"Scooby-Doo"},
+  {c:"film", ty:["emo"], p:"🚙🏜️🔥🎸", h:"Film, začína na M.", a:"Mad Max"},
+  {c:"film", ty:["emo"], p:"🧔🪓🏨❄️", h:"Horor, začína na O.", a:"Osvietenie"},
+  {c:"film", ty:["emo"], p:"🤖❤️🌱", h:"Rozprávka, začína na W.", a:"WALL-E"},
+  {c:"film", ty:["emo"], p:"🐜👨", h:"Superhrdina, začína na A.", a:"Ant-Man"},
+  {c:"film", ty:["emo"], p:"🟢💪😡", h:"Superhrdina, začína na H.", a:"Hulk"},
+  {c:"film", ty:["emo"], p:"🔨⚡", h:"Superhrdina, začína na T.", a:"Thor"},
+  {c:"film", ty:["emo"], p:"🛡️⭐🇺🇸", h:"Superhrdina, začína na K.", a:"Kapitán Amerika"},
+  {c:"film", ty:["emo"], p:"🕶️🕴️👽", h:"Film, začína na M.", a:"Muži v čiernom"},
+  {c:"osob", ty:["emo"], p:"👑🎤🧤🌙", h:"Spevák, začína na M.", a:"Michael Jackson"},
+  {c:"osob", ty:["emo"], p:"🍖👗🎤", h:"Speváčka, začína na L.", a:"Lady Gaga"},
+  {c:"osob", ty:["emo"], p:"⚡🏃🇯🇲", h:"Športovec, začína na U.", a:"Usain Bolt"},
+  {c:"osob", ty:["emo"], p:"🧠👅📐", h:"Vedec, začína na A.", a:"Albert Einstein"},
+  {c:"osob", ty:["emo"], p:"🎨👂🌻", h:"Maliar, začína na V.", a:"Vincent van Gogh"},
+  {c:"osob", ty:["emo"], p:"🚀🚗⚡", h:"Podnikateľ, začína na E.", a:"Elon Musk"},
+  {c:"osob", ty:["emo"], p:"🍎👓🧥", h:"Podnikateľ, začína na S.", a:"Steve Jobs"},
+  {c:"osob", ty:["emo"], p:"🕺👑🎸", h:"Spevák, začína na E.", a:"Elvis Presley"},
+  {c:"osob", ty:["emo"], p:"⚽🐐🇦🇷", h:"Futbalista, začína na L.", a:"Lionel Messi"},
+  {c:"osob", ty:["emo"], p:"⚽7️⃣🇵🇹", h:"Futbalista, začína na C.", a:"Cristiano Ronaldo"},
+  {c:"osob", ty:["emo"], p:"🏎️🇩🇪🏆", h:"Pretekár, začína na M.", a:"Michael Schumacher"},
+  {c:"osob", ty:["emo"], p:"💪🤖🇦🇹", h:"Herec, začína na A.", a:"Arnold Schwarzenegger"},
+  {c:"osob", ty:["emo"], p:"🪨💪🎬", h:"Herec, začína na D.", a:"Dwayne Johnson"},
+  {c:"osob", ty:["emo"], p:"🎤👸🐝", h:"Speváčka, začína na B.", a:"Beyoncé"},
+  {c:"osob", ty:["emo"], p:"☂️🎤💎", h:"Speváčka, začína na R.", a:"Rihanna"},
+  {c:"osob", ty:["emo"], p:"🧸🚗🤐", h:"Postava, začína na M.", a:"Mr. Bean"},
+  {c:"osob", ty:["emo"], p:"🥊👂🦷", h:"Boxer, začína na M.", a:"Mike Tyson"},
+  {c:"osob", ty:["emo"], p:"🏀🐂2️⃣3️⃣", h:"Basketbalista, začína na M.", a:"Michael Jordan"},
+  {c:"osob", ty:["emo"], p:"🎹👓🚀", h:"Spevák, začína na E.", a:"Elton John"},
+  {c:"znac", ty:["emo"], p:"🟡Ⓜ️🍟", h:"Reštaurácia, začína na M.", a:"McDonald's"},
+  {c:"znac", ty:["emo"], p:"👻💛📸", h:"Aplikácia, začína na S.", a:"Snapchat"},
+  {c:"znac", ty:["emo"], p:"🎵📱💃", h:"Aplikácia, začína na T.", a:"TikTok"},
+  {c:"znac", ty:["emo"], p:"🟢🎧", h:"Aplikácia, začína na S.", a:"Spotify"},
+  {c:"znac", ty:["emo"], p:"📦😊", h:"Značka, začína na A.", a:"Amazon"},
+  {c:"znac", ty:["emo"], p:"▶️🔴", h:"Značka, začína na Y.", a:"YouTube"},
+  {c:"znac", ty:["emo"], p:"🎬🍿🔴", h:"Značka, začína na N.", a:"Netflix"},
+  {c:"znac", ty:["emo"], p:"🚗⚡🔋", h:"Auto, začína na T.", a:"Tesla"},
+  {c:"znac", ty:["emo"], p:"🧱🧱👷", h:"Hračka, začína na L.", a:"Lego"},
+  {c:"znac", ty:["emo"], p:"🛋️🔧🇸🇪", h:"Obchod, začína na I.", a:"IKEA"},
+  {c:"znac", ty:["emo"], p:"✔️👟", h:"Značka, začína na N.", a:"Nike"},
+  {c:"znac", ty:["emo"], p:"🥤🔴🐻‍❄️", h:"Nápoj, začína na C.", a:"Coca-Cola"},
+  {c:"znac", ty:["emo"], p:"🍫🌰🥄", h:"Jedlo, začína na N.", a:"Nutella"},
+  {c:"znac", ty:["emo"], p:"👨‍🍳🍗🪣", h:"Reštaurácia, začína na K.", a:"KFC"},
+  {c:"znac", ty:["emo"], p:"🍕🛖", h:"Reštaurácia, začína na P.", a:"Pizza Hut"},
+  {c:"znac", ty:["emo"], p:"🐧💻", h:"Softvér, začína na L.", a:"Linux"},
+  {c:"znac", ty:["emo"], p:"🤖📱🟢", h:"Softvér, začína na A.", a:"Android"},
+  {c:"znac", ty:["emo"], p:"🪙₿", h:"Mena, začína na B.", a:"Bitcoin"},
+  {c:"znac", ty:["emo"], p:"🏠🛏️✈️", h:"Služba, začína na A.", a:"Airbnb"},
+  {c:"znac", ty:["emo"], p:"💬🟢📞", h:"Aplikácia, začína na W.", a:"WhatsApp"},
+  {c:"znac", ty:["emo"], p:"📌❤️", h:"Aplikácia, začína na P.", a:"Pinterest"},
+  {c:"mies", ty:["emo"], p:"🗼🍣🌸", h:"Mesto, začína na T.", a:"Tokio"},
+  {c:"mies", ty:["emo"], p:"🏙️🏜️🛍️", h:"Mesto, začína na D.", a:"Dubaj"},
+  {c:"mies", ty:["emo"], p:"🛶🎭🍝", h:"Mesto, začína na B.", a:"Benátky"},
+  {c:"mies", ty:["emo"], p:"🏛️🫒🌊", h:"Krajina, začína na G.", a:"Grécko"},
+  {c:"mies", ty:["emo"], p:"🍷🥖🧀", h:"Krajina, začína na F.", a:"Francúzsko"},
+  {c:"mies", ty:["emo"], p:"🍝🍕🛵", h:"Krajina, začína na T.", a:"Taliansko"},
+  {c:"mies", ty:["emo"], p:"🐻❄️🪆", h:"Krajina, začína na R.", a:"Rusko"},
+  {c:"mies", ty:["emo"], p:"🐘🍛🕌", h:"Krajina, začína na I.", a:"India"},
+  {c:"mies", ty:["emo"], p:"🏔️🧗🇳🇵", h:"Hora, začína na M.", a:"Mount Everest"},
+  {c:"mies", ty:["emo"], p:"🥁💃⚽🏖️", h:"Krajina, začína na B.", a:"Brazília"},
+  {c:"mies", ty:["emo"], p:"🥩⚽💃", h:"Krajina, začína na A.", a:"Argentína"},
+  {c:"mies", ty:["emo"], p:"🍀🍺🎻", h:"Krajina, začína na Í.", a:"Írsko"},
+  {c:"mies", ty:["emo"], p:"🧛🏰🌲", h:"Územie, začína na T.", a:"Transylvánia"},
+  {c:"mies", ty:["emo"], p:"🎻🎼🍰", h:"Mesto, začína na V.", a:"Viedeň"},
+  {c:"mies", ty:["emo"], p:"🏰🍺🌉", h:"Mesto, začína na P.", a:"Praha"},
+  {c:"mies", ty:["emo"], p:"🏔️🐑🥟", h:"Krajina, začína na S.", a:"Slovensko"},
+  {c:"mies", ty:["emo"], p:"🌉🌁🚋", h:"Mesto, začína na S.", a:"San Francisco"},
+  {c:"mies", ty:["emo"], p:"🎬⭐🌴", h:"Miesto, začína na H.", a:"Hollywood"},
+  {c:"mies", ty:["emo"], p:"🗿🌊", h:"Ostrov, začína na V.", a:"Veľkonočný ostrov"},
+  {c:"mies", ty:["emo"], p:"🧱🐉🚶", h:"Pamiatka, začína na V.", a:"Veľký čínsky múr"},
+  {c:"mies", ty:["emo"], p:"🐧❄️🧊", h:"Kontinent, začína na A.", a:"Antarktída"},
+  {c:"mies", ty:["emo"], p:"🎢🐭🏰", h:"Miesto, začína na D.", a:"Disneyland"},
+  {c:"hud", ty:["emo"], p:"⚡🎸🇦🇺", h:"Kapela, začína na A.", a:"AC/DC"},
+  {c:"hud", ty:["emo"], p:"🧱🐖🎸", h:"Kapela, začína na P.", a:"Pink Floyd"},
+  {c:"hud", ty:["emo"], p:"🚪🚪🎤", h:"Kapela, začína na D.", a:"The Doors"},
+  {c:"hud", ty:["emo"], p:"🦂🎸🌬️", h:"Kapela, začína na S.", a:"Scorpions"},
+  {c:"hud", ty:["emo"], p:"💋🎸👅", h:"Kapela, začína na K.", a:"Kiss"},
+  {c:"hud", ty:["emo"], p:"🪨🔄👅", h:"Kapela, začína na R.", a:"Rolling Stones"},
+  {c:"hud", ty:["emo"], p:"🟢📅", h:"Kapela, začína na G.", a:"Green Day"},
+  {c:"hud", ty:["emo"], p:"🐒❄️", h:"Kapela, začína na A.", a:"Arctic Monkeys"},
+  {c:"hud", ty:["emo"], p:"🧟🌱🌻", h:"Hra, začína na P.", a:"Plants vs. Zombies"},
+  {c:"hud", ty:["emo"], p:"🔫🚌🪂", h:"Hra, začína na F.", a:"Fortnite"},
+  {c:"hud", ty:["emo"], p:"🧑‍🚀🔪🚀", h:"Hra, začína na A.", a:"Among Us"},
+  {c:"hud", ty:["emo"], p:"⚽🚗🚀", h:"Hra, začína na R.", a:"Rocket League"},
+  {c:"hud", ty:["emo"], p:"🐍🍎📱", h:"Hra, začína na H.", a:"Had"},
+  {c:"hud", ty:["emo"], p:"🃏♠️💻", h:"Hra, začína na S.", a:"Solitaire"},
+  {c:"hud", ty:["emo"], p:"💣🚩🔢", h:"Hra, začína na H.", a:"Hľadanie mín"},
+  {c:"hud", ty:["emo"], p:"🏎️🍌🐢", h:"Hra, začína na M.", a:"Mario Kart"},
+  {c:"hud", ty:["emo"], p:"👊🩸🐉", h:"Hra, začína na M.", a:"Mortal Kombat"},
+  {c:"hud", ty:["emo"], p:"🔴⚪⚡🐭", h:"Hra, začína na P.", a:"Pokémon"},
+
+  {c:"slov", ty:["reb"], p:"🦷 + ár", h:"Povolanie, začína na Z.", a:"Zubár"},
+  {c:"slov", ty:["reb"], p:"🦷 + r", h:"Zviera, začína na Z.", a:"Zubr"},
+  {c:"slov", ty:["reb"], p:"🚗 + bus", h:"Vozidlo, začína na A.", a:"Autobus"},
+  {c:"slov", ty:["reb"], p:"🚗 + mat", h:"Vec, začína na A.", a:"Automat"},
+  {c:"slov", ty:["reb"], p:"🚗 + r", h:"Osoba, začína na A.", a:"Autor"},
+  {c:"slov", ty:["reb"], p:"🚗 + gram", h:"Vec, začína na A.", a:"Autogram"},
+  {c:"slov", ty:["reb"], p:"🍯 + veď", h:"Zviera, začína na M.", a:"Medveď"},
+  {c:"slov", ty:["reb"], p:"🍯 + úza", h:"Zviera, začína na M.", a:"Medúza"},
+  {c:"slov", ty:["reb"], p:"🍯 + aila", h:"Vec, začína na M.", a:"Medaila"},
+  {c:"slov", ty:["reb"], p:"🍷 + 🏰", h:"Miesto, začína na V.", a:"Vinohrad"},
+  {c:"slov", ty:["reb"], p:"🌍 + iak", h:"Jedlo, začína na Z.", a:"Zemiak"},
+  {c:"slov", ty:["reb"], p:"👃 + orožec", h:"Zviera, začína na N.", a:"Nosorožec"},
+  {c:"slov", ty:["reb"], p:"✋ + vica", h:"Oblečenie, začína na R.", a:"Rukavica"},
+  {c:"slov", ty:["reb"], p:"🦵 + vice", h:"Oblečenie, začína na N.", a:"Nohavice"},
+  {c:"slov", ty:["reb"], p:"🐺 + odlak", h:"Bytosť, začína na V.", a:"Vlkodlak"},
+  {c:"slov", ty:["reb"], p:"🐭 + 🐞", h:"Pojem, začína na M.", a:"Myšlienka"},
+  {c:"slov", ty:["reb"], p:"🐍 + ica", h:"Vec, začína na H.", a:"Hadica"},
+  {c:"slov", ty:["reb"], p:"🐛 + ený", h:"Farba, začína na Č.", a:"Červený"},
+  {c:"slov", ty:["reb"], p:"🦴 + ol", h:"Budova, začína na K.", a:"Kostol"},
+  {c:"slov", ty:["reb"], p:"🍺 + var", h:"Budova, začína na P.", a:"Pivovar"},
+  {c:"slov", ty:["reb"], p:"🐕 + nička", h:"Hudba, začína na P.", a:"Pesnička"},
+  {c:"slov", ty:["reb"], p:"🐄 + ta", h:"Oblečenie, začína na K.", a:"Kravata"},
+  {c:"slov", ty:["reb"], p:"👄 + va", h:"Dokument, začína na Ú.", a:"Ústava"},
+  {c:"slov", ty:["reb"], p:"vz + 👻", h:"Pojem, začína na V.", a:"Vzduch"},
+  {c:"slov", ty:["reb"], p:"ra + 🎁", h:"Prístroj, začína na R.", a:"Radar"},
+  {c:"slov", ty:["reb"], p:"🏠 + ino", h:"Hra, začína na D.", a:"Domino"},
+  {c:"slov", ty:["reb"], p:"k + 👁️ + s", h:"Jedlo, začína na K.", a:"Kokos"},
+  {c:"slov", ty:["reb"], p:"s + 👁️ + l", h:"Zviera, začína na S.", a:"Sokol"},
+  {c:"slov", ty:["reb"], p:"🖊️ + n", h:"Miesto, začína na P.", a:"Peron"},
+  {c:"slov", ty:["reb"], p:"100 + nožka", h:"Zviera, začína na S.", a:"Stonožka"},
+  {c:"slov", ty:["reb"], p:"100 + p", h:"Slovo, začína na S.", a:"Stop"},
+  {c:"slov", ty:["reb"], p:"me + 100", h:"Miesto, začína na M.", a:"Mesto"},
+  {c:"slov", ty:["reb"], p:"3 + čko", h:"Oblečenie, začína na T.", a:"Tričko"},
+  {c:"slov", ty:["reb"], p:"s + 3 + h", h:"Slovo, začína na S.", a:"Strih"},
+  {c:"slov", ty:["reb"], p:"🦀 + eta", h:"Stroj, začína na R.", a:"Raketa"},
+  {c:"slov", ty:["reb"], p:"🧊 + ovec", h:"Príroda, začína na Ľ.", a:"Ľadovec"},
+  {c:"slov", ty:["reb"], p:"🎹 + ista", h:"Povolanie, začína na K.", a:"Klavirista"},
+  {c:"slov", ty:["reb"], p:"🐘 + ovina", h:"Materiál, začína na S.", a:"Slonovina"},
+  {c:"slov", ty:["reb"], p:"🏰 + ba", h:"Stavba, začína na H.", a:"Hradba"},
+  {c:"slov", ty:["reb"], p:"🌉 + ík", h:"Stavba, začína na M.", a:"Mostík"},
+  {c:"slov", ty:["reb"], p:"🔔 + ček", h:"Vec, začína na Z.", a:"Zvonček"},
+  {c:"slov", ty:["reb"], p:"🎁 + ček", h:"Vec, začína na D.", a:"Darček"},
+  {c:"slov", ty:["reb"], p:"🪨 + olom", h:"Miesto, začína na K.", a:"Kameňolom"},
+  {c:"slov", ty:["reb"], p:"🐦 + opysk", h:"Zviera, začína na V.", a:"Vtákopysk"},
+  {c:"slov", ty:["reb"], p:"🧂 + nička", h:"Vec, začína na S.", a:"Soľnička"},
+  {c:"slov", ty:["reb"], p:"🌳 + ček", h:"Vec, začína na S.", a:"Stromček"},
+  {c:"slov", ty:["reb"], p:"🏠 + ov", h:"Miesto, začína na D.", a:"Domov"},
+  {c:"slov", ty:["reb"], p:"🥛 + 🛤️", h:"Vesmír, začína na M.", a:"Mliečna dráha"},
+  {c:"slov", ty:["reb"], p:"🧊 + 🐻", h:"Zviera, začína na Ľ.", a:"Ľadový medveď"},
+  {c:"slov", ty:["reb"], p:"🌊 + 🐷", h:"Zviera, začína na M.", a:"Morské prasa"},
+  {c:"slov", ty:["reb"], p:"🌊 + 🐎", h:"Zviera, začína na M.", a:"Morský koník"},
+  {c:"slov", ty:["reb"], p:"🌊 + ⭐", h:"Zviera, začína na M.", a:"Morská hviezda"},
+  {c:"slov", ty:["reb"], p:"🌧️ + 🧥", h:"Oblečenie, začína na P.", a:"Pršiplášť"},
+  {c:"slov", ty:["reb"], p:"🦷 + 🧚", h:"Bytosť, začína na Z.", a:"Zubná víla"},
+  {c:"slov", ty:["reb"], p:"✈️ + 🚢", h:"Stroj, začína na L.", a:"Lietadlová loď"},
+  {c:"slov", ty:["reb"], p:"⚡ + 🚗", h:"Vozidlo, začína na E.", a:"Elektromobil"},
+  {c:"slov", ty:["reb"], p:"🌙 + 🚶", h:"Osoba, začína na N.", a:"Námesačník"},
+  {c:"slov", ty:["reb"], p:"🏹 + áš", h:"Meno, začína na L.", a:"Lukáš"},
+  {c:"slov", ty:["reb"], p:"Pa + 3 + k", h:"Meno, začína na P.", a:"Patrik"},
+  {c:"slov", ty:["reb"], p:"🎁 + ina", h:"Meno, začína na D.", a:"Darina"},
+  {c:"slov", ty:["reb"], p:"🏠 + inik", h:"Meno, začína na D.", a:"Dominik"},
+  {c:"mies", ty:["reb"], p:"🦀 + úsko", h:"Krajina, začína na R.", a:"Rakúsko"},
+  {c:"mies", ty:["reb"], p:"I + 🦀", h:"Krajina, začína na I.", a:"Irak"},
+  {c:"mies", ty:["reb"], p:"🧀 + ia", h:"Krajina, začína na S.", a:"Sýria"},
+  {c:"mies", ty:["reb"], p:"🦁 + ice", h:"Mesto, začína na L.", a:"Levice"},
+  {c:"mies", ty:["reb"], p:"🦁 + oča", h:"Mesto, začína na L.", a:"Levoča"},
+  {c:"mies", ty:["reb"], p:"🌉 + ar", h:"Mesto, začína na M.", a:"Mostar"},
+  {c:"mies", ty:["reb"], p:"⚪ + 🏰", h:"Mesto, začína na B.", a:"Belehrad"},
+  {c:"mies", ty:["reb"], p:"⚫ + 🏔️", h:"Krajina, začína na Č.", a:"Čierna Hora"},
+  {c:"mies", ty:["reb"], p:"🆕 + 🏰🏰", h:"Mesto, začína na N.", a:"Nové Zámky"},
+  {c:"mies", ty:["reb"], p:"Buda + 🐕 + ť", h:"Mesto, začína na B.", a:"Budapešť"},
+  {c:"mies", ty:["reb"], p:"🧂 + 🏰", h:"Mesto, začína na S.", a:"Salzburg"},
+  {c:"mies", ty:["reb"], p:"🐂 + brod", h:"Mesto, začína na O.", a:"Oxford"},
+  {c:"mies", ty:["reb"], p:"🐺 + 🏰", h:"Mesto, začína na W.", a:"Wolfsburg"},
+  {c:"mies", ty:["reb"], p:"100 + kholm", h:"Mesto, začína na Š.", a:"Štokholm"},
+  {c:"mies", ty:["reb"], p:"7 + hradsko", h:"Územie, začína na S.", a:"Sedmohradsko"},
+  {c:"hud", ty:["reb"], p:"🧹 + ika", h:"Kapela, začína na M.", a:"Metallica"},
+  {c:"film", ty:["reb"], p:"❄️ + u + 🐞", h:"Rozprávka, začína na S.", a:"Snehulienka"},
+  {c:"film", ty:["reb"], p:"🐛 + ená + 🧢", h:"Rozprávka, začína na Č.", a:"Červená čiapočka"}
+];
+
+var KEY = "uhadni-co-pocujes-v2";
+var CKEY = "uhadni-co-pocujes-cards-v1";
+var $ = function(id){return document.getElementById(id);};
+
+/* ---------- Karty (s úpravami používateľa) ---------- */
+var CS = {edits:{}, custom:[]};   // úpravy a vlastné karty
+var ALL = [];                      // výsledný zoznam kariet
+var editingId = null;
+
+function loadCards(){
+  try{
+    var raw = localStorage.getItem(CKEY);
+    if(raw){ var o = JSON.parse(raw); if(o && o.edits && o.custom) CS = o; }
+  }catch(e){}
+}
+function saveCards(){ try{ localStorage.setItem(CKEY, JSON.stringify(CS)); }catch(e){} }
+var SK_RE = /[áäčďéíĺľňóôŕšťúýžÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ]/;
+var SK_PLAIN = ["Praha","Bratislava","Japonsko","Taliansko","Kanada","Tibet","Afrika","Holandsko","Simpsonovci","Priatelia","Island","Singapur","Hongkong","Tokio","Peking","Bahamy","Kapverdy","Kostarika","Portoriko","Kuba","Egypt","Dubaj","Mexiko","Rusko","India","Slovensko","Hore","Kruh","To","Had","Aladin","Mimoni","Osvietenie","Tri prasiatka","Vlk a sedem kozliatok","Snehulienka","Krotitelia duchov","Socha slobody","Tom a Jerry","Irak","Levice","Mostar","Belehrad","Sedmohradsko","Venezuela","Barbados","Pakistan"];
+var ORIG_FORCE = ["Beyoncé","Sagrada Família","Pokémon","Nescafé","Škoda Octavia","Côte d'Azur"];
+// jazyk odpovede: "sk" = po slovensky, "orig" = v origináli
+function guessLang(a, cat){
+  if(ORIG_FORCE.indexOf(a)>-1) return "orig";
+  if(cat==="slov") return "sk";
+  if(SK_PLAIN.indexOf(a)>-1 || SK_RE.test(a)) return "sk";
+  return "orig";
+}
+function langLabel(lg){ return lg==="sk" ? "🇸🇰 Odpoveď po slovensky" : "🌍 Odpoveď v origináli"; }
+
+function buildAll(){
+  ALL = CARDS.map(function(c,i){
+    var id = "d:"+c.p, e = CS.edits[id] || {};
+    return {id:id, c:c.c, p:e.p!==undefined?e.p:c.p, h:e.h!==undefined?e.h:c.h, a:e.a!==undefined?e.a:c.a, off:!!e.off, del:!!e.del, ty:normTy(e.ty!==undefined?e.ty:(c.ty||(c.t?["pre"]:["fon"]))), lg:(e.lg||c.lg||guessLang(e.a!==undefined?e.a:c.a, c.c)), custom:false};
+  }).filter(function(x){return !x.del;});
+  CS.custom.forEach(function(c){
+    ALL.push({id:c.id, c:c.c, p:c.p, h:c.h, a:c.a, off:!!c.off, ty:normTy(c.ty||(c.t?["pre"]:["fon"])), lg:(c.lg||guessLang(c.a,c.c)), custom:true});
+  });
+}
+function patchCard(id, patch){
+  var card = ALL.filter(function(x){return x.id===id;})[0];
+  if(card && card.custom){
+    var cc = CS.custom.filter(function(x){return x.id===id;})[0];
+    Object.keys(patch).forEach(function(k){ cc[k] = patch[k]; });
+  } else {
+    CS.edits[id] = CS.edits[id] || {};
+    Object.keys(patch).forEach(function(k){ CS.edits[id][k] = patch[k]; });
+  }
+  saveCards(); buildAll();
+}
+
+/* ---------- Stav ---------- */
+var settings = {mode:"teams", n:2, hints:true, hintTimer:false, t1:8, timer:true, t2:15, preview:true, pen:3, cats:["film","osob","znac","mies","hud","slov"], known:["film","osob","znac","mies","hud","slov"], types:["fon","pre","sla","opi","emo","rev","reb"], knownTypes:["fon","pre","sla","opi","emo","rev","reb"]};
+var game = null, cfg = null;
+var rankBy = "best";
+
+var cur = null, curPlayer = 1, phase = "back", phaseStart = 0, ticker = null;
+// čas hádania: runAcc = odbehnuté ms pri fráze, segStart = začiatok bežiaceho úseku, penMs = tresty
+var runAcc = 0, segStart = 0, penMs = 0;
+var pendingTime = 0, recIdx = -1;
+
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify({settings:settings, game:game})); }catch(e){}
+}
+function load(){
+  try{ var raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+
+/* ---------- Pomocné ---------- */
+function fmt(t){ return t.toFixed(1).replace(".", ",") + " s"; }
+function pcol(i){ return "hsl(" + Math.round(((i-1)*137.5) % 360) + " 55% 38%)"; }
+function noun(){ return cfg.mode==="teams" ? "tím" : "hráč"; }
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
+function newDeck(c){
+  var idx=[];
+  ALL.forEach(function(card,i){ var wt = c.types || TYPES.map(function(t){return t.id;});
+    var typeOk = card.ty.some(function(t){ return wt.indexOf(t)>-1; });
+    if(!card.off && typeOk && c.cats.indexOf(card.c)>-1) idx.push(i); });
+  return shuffle(idx);
+}
+function show(id){
+  ["setup","cards","game","results"].forEach(function(s){ $(s).classList.toggle("hidden", s!==id); });
+  window.scrollTo(0,0);
+}
+function enabledCount(){ return ALL.filter(function(c){return !c.off;}).length; }
+
+/* ---------- Nastavenia ---------- */
+function setSeg(id, attr, value){
+  document.querySelectorAll("#"+id+" button").forEach(function(b){
+    b.classList.toggle("on", b.getAttribute(attr)===value);
+  });
+}
+function renderSetup(){
+  setSeg("modeSeg","data-mode",settings.mode);
+  setSeg("hintsSeg","data-v",settings.hints?"1":"0");
+  setSeg("hintSeg","data-v",settings.hintTimer?"1":"0");
+  setSeg("timerSeg","data-v",settings.timer?"1":"0");
+  setSeg("prevSeg","data-v",settings.preview?"1":"0");
+  $("hintTimerRow").classList.toggle("hidden", !settings.hints);
+  $("t1row").classList.toggle("hidden", !(settings.hints && settings.hintTimer));
+  $("t2row").classList.toggle("hidden", !settings.timer);
+  $("countLbl").textContent = settings.mode==="teams" ? "Počet tímov" : "Počet hráčov";
+  document.querySelectorAll(".step").forEach(function(s){
+    s.querySelector("output").textContent = settings[s.getAttribute("data-key")];
+  });
+  var box = $("catChips"); box.innerHTML = "";
+  CATS.forEach(function(c){
+    var b = document.createElement("button");
+    b.type="button"; b.className = "chip" + (settings.cats.indexOf(c.id)>-1 ? " on":"");
+    b.textContent = c.name;
+    b.onclick = function(){
+      var i = settings.cats.indexOf(c.id);
+      if(i>-1){ if(settings.cats.length>1) settings.cats.splice(i,1); }
+      else settings.cats.push(c.id);
+      renderSetup();
+    };
+    box.appendChild(b);
+  });
+  var tbox = $("typeChips"); tbox.innerHTML = "";
+  TYPES.forEach(function(t){
+    var b = document.createElement("button");
+    b.type="button"; b.className = "chip" + (settings.types.indexOf(t.id)>-1 ? " on":"");
+    var n = ALL.filter(function(c){ return !c.off && c.ty.indexOf(t.id)>-1; }).length;
+    b.textContent = t.icon + " " + t.name + " (" + n + ")";
+    b.onclick = function(){
+      var i = settings.types.indexOf(t.id);
+      if(i>-1){ if(settings.types.length>1) settings.types.splice(i,1); }
+      else settings.types.push(t.id);
+      renderSetup();
+    };
+    tbox.appendChild(b);
+  });
+  $("cardsBtn").textContent = "Prehľad kariet (" + enabledCount() + " zapnutých)";
+  $("startMsg").textContent = "";
+  $("resumeBtn").classList.toggle("hidden", !(game && game.cfg && game.round>0));
+}
+
+document.querySelectorAll("#modeSeg button").forEach(function(b){
+  b.onclick = function(){ settings.mode = b.getAttribute("data-mode"); renderSetup(); };
+});
+document.querySelectorAll("#hintsSeg button").forEach(function(b){
+  b.onclick = function(){ settings.hints = b.getAttribute("data-v")==="1"; renderSetup(); };
+});
+document.querySelectorAll("#hintSeg button").forEach(function(b){
+  b.onclick = function(){ settings.hintTimer = b.getAttribute("data-v")==="1"; renderSetup(); };
+});
+document.querySelectorAll("#timerSeg button").forEach(function(b){
+  b.onclick = function(){ settings.timer = b.getAttribute("data-v")==="1"; renderSetup(); };
+});
+document.querySelectorAll("#prevSeg button").forEach(function(b){
+  b.onclick = function(){ settings.preview = b.getAttribute("data-v")==="1"; renderSetup(); };
+});
+document.querySelectorAll(".step button").forEach(function(b){
+  b.onclick = function(){
+    var s = b.parentNode, k = s.getAttribute("data-key");
+    var v = settings[k] + parseInt(b.getAttribute("data-d"),10)*parseInt(s.getAttribute("data-inc"),10);
+    v = Math.max(parseInt(s.getAttribute("data-min"),10), Math.min(parseInt(s.getAttribute("data-max"),10), v));
+    settings[k] = v; renderSetup();
+  };
+});
+
+$("startBtn").onclick = function(){
+  var c = JSON.parse(JSON.stringify(settings));
+  var deck = newDeck(c);
+  if(!deck.length){ $("startMsg").textContent = "Zapni aspoň jednu kartu vo zvolených kategóriách a typoch."; return; }
+  game = {cfg:c, deck:deck, pos:0, round:0, turn:1, results:[]};
+  cfg = game.cfg; cur = null;
+  save(); show("game"); nextCard(false);
+};
+$("resumeBtn").onclick = function(){
+  cfg = game.cfg;
+  if(cfg.hints===undefined) cfg.hints = true;
+  if(cfg.timer===undefined) cfg.timer = true;
+  cur = null;
+  show("game"); nextCard(false);
+};
+
+/* ---------- Prehľad kariet ---------- */
+function renderCards(){
+  $("cardsLead").textContent = "Zapnutých " + enabledCount() + " z " + ALL.length + ". Vypnuté karty sa v hre neukážu.";
+  var nd = deletedCount();
+  $("restoreBtn").classList.toggle("hidden", nd===0);
+  $("restoreBtn").textContent = "Obnoviť odstránené karty (" + nd + ")";
+  var box = $("cardList"); box.innerHTML = "";
+  CATS.forEach(function(cat){
+    var items = ALL.filter(function(c){return c.c===cat.id;});
+    if(!items.length) return;
+    var h = document.createElement("div"); h.className="cat-h"; h.textContent = cat.name + " (" + items.length + ")";
+    box.appendChild(h);
+    items.forEach(function(card){ box.appendChild(cardRow(card)); });
+  });
+  if(editingId==="new"){ box.insertBefore(editForm(null), box.firstChild); }
+}
+
+function deletedCount(){ return Object.keys(CS.edits).filter(function(k){ return CS.edits[k].del; }).length; }
+function removeCard(card){
+  if(card.custom){ CS.custom = CS.custom.filter(function(x){return x.id!==card.id;}); saveCards(); buildAll(); }
+  else patchCard(card.id,{del:true});
+}
+
+function cardRow(card){
+  var row = document.createElement("div");
+  row.className = "crow" + (card.off ? " off" : "");
+  if(editingId===card.id){ row.appendChild(editForm(card)); return row; }
+  var cb = document.createElement("input"); cb.type="checkbox"; cb.checked = !card.off;
+  cb.setAttribute("aria-label","Zapnúť kartu " + card.p);
+  cb.onchange = function(){ patchCard(card.id,{off:!cb.checked}); renderCards(); };
+  var t = document.createElement("div"); t.className="txt";
+  var b = document.createElement("b"); b.textContent = card.p;
+  var an = document.createElement("span"); an.className="ans"; an.textContent = card.a + "  " + card.ty.map(function(id){ return typeOf(id).icon; }).join("") + " " + (card.lg==="sk" ? "🇸🇰" : "🌍");
+  var hh = document.createElement("small"); hh.textContent = card.h || "(bez nápovedy)";
+  t.appendChild(b); t.appendChild(an); t.appendChild(hh);
+  var ed = document.createElement("button"); ed.type="button"; ed.className="ed"; ed.textContent="Upraviť";
+  ed.onclick = function(){ editingId = card.id; renderCards(); };
+  row.appendChild(cb); row.appendChild(t); row.appendChild(ed);
+  return row;
+}
+
+function field(label, value){
+  var l = document.createElement("label"); l.textContent = label;
+  var i = document.createElement("input"); i.type="text"; i.value = value || "";
+  l.appendChild(i); return {el:l, input:i};
+}
+
+function editForm(card){
+  var isNew = !card;
+  var wrap = document.createElement("div");
+  if(isNew) wrap.className = "crow";
+  var f = document.createElement("div"); f.className = "eform";
+  var fp = field("Fráza na čítanie", card ? card.p : "");
+  var fh = field("Nápoveda (čo to znamená)", card ? card.h : "");
+  var fa = field("Správna odpoveď", card ? card.a : "");
+  f.appendChild(fp.el); f.appendChild(fh.el); f.appendChild(fa.el);
+  var tw = document.createElement("div");
+  tw.style.cssText = "display:grid;gap:6px";
+  var tlab = document.createElement("div"); tlab.style.cssText = "font-size:13px;color:var(--muted)"; tlab.textContent = "Typ karty";
+  tw.appendChild(tlab);
+  var tcs = [];
+  TYPES.forEach(function(t){
+    var l = document.createElement("label");
+    l.style.cssText = "display:flex;align-items:center;gap:8px;flex-direction:row;color:var(--fg);font-size:14px";
+    var cb = document.createElement("input"); cb.type = "checkbox"; cb.style.width = "auto";
+    cb.checked = card ? card.ty.indexOf(t.id)>-1 : t.id==="fon";
+    tcs.push({id:t.id, cb:cb});
+    l.appendChild(cb); l.appendChild(document.createTextNode(t.icon + " " + t.name));
+    tw.appendChild(l);
+  });
+  f.appendChild(tw);
+  var ll = document.createElement("label"); ll.textContent = "Jazyk odpovede";
+  var ls = document.createElement("select");
+  [["sk","🇸🇰 Po slovensky"],["orig","🌍 V origináli"]].forEach(function(o){
+    var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; ls.appendChild(op);
+  });
+  ls.value = card ? card.lg : "orig";
+  ll.appendChild(ls); f.appendChild(ll);
+  var pickedTypes = function(){
+    var r = tcs.filter(function(x){return x.cb.checked;}).map(function(x){return x.id;});
+    return r.length ? r : ["fon"];
+  };
+  var sel = null;
+  if(isNew){
+    var l = document.createElement("label"); l.textContent = "Kategória";
+    sel = document.createElement("select");
+    CATS.forEach(function(c){ var o=document.createElement("option"); o.value=c.id; o.textContent=c.name; sel.appendChild(o); });
+    l.appendChild(sel); f.appendChild(l);
+  }
+  var pr = document.createElement("div"); pr.className = "pair";
+  var sv = document.createElement("button"); sv.type="button"; sv.className="save"; sv.textContent="Uložiť";
+  var cn = document.createElement("button"); cn.type="button"; cn.className="cancel"; cn.textContent="Zrušiť";
+  sv.onclick = function(){
+    var p = fp.input.value.trim(), h = fh.input.value.trim(), a = fa.input.value.trim();
+    if(!p || !a){ fp.input.focus(); return; }
+    if(isNew){
+      CS.custom.push({id:"u"+Date.now(), c:sel.value, p:p, h:h, a:a, ty:pickedTypes(), lg:ls.value, off:false});
+      saveCards(); buildAll();
+    } else {
+      patchCard(card.id,{p:p,h:h,a:a,ty:pickedTypes(),lg:ls.value});
+    }
+    editingId = null; renderCards();
+  };
+  cn.onclick = function(){ editingId = null; renderCards(); };
+  pr.appendChild(sv); pr.appendChild(cn); f.appendChild(pr);
+  if(!isNew){
+    var dl = document.createElement("button"); dl.type="button"; dl.className="btn ghost small";
+    dl.style.color = "var(--bad)"; dl.textContent = "Odstrániť kartu";
+    var armed = false;
+    dl.onclick = function(){
+      if(!armed){ armed = true; dl.textContent = "Naozaj odstrániť? Ťukni znova"; return; }
+      removeCard(card); editingId = null; renderCards();
+    };
+    f.appendChild(dl);
+  }
+  wrap.appendChild(f);
+  return isNew ? wrap : f;
+}
+
+$("cardsBtn").onclick = function(){ editingId = null; renderCards(); show("cards"); };
+$("cardsBack").onclick = function(){ editingId = null; show("setup"); renderSetup(); };
+$("allOn").onclick = function(){
+  ALL.forEach(function(c){ if(c.off) patchCard(c.id,{off:false}); });
+  renderCards();
+};
+$("addCard").onclick = function(){ editingId = "new"; renderCards(); window.scrollTo(0,0); };
+$("restoreBtn").onclick = function(){
+  Object.keys(CS.edits).forEach(function(k){ if(CS.edits[k].del) delete CS.edits[k].del; });
+  saveCards(); buildAll(); renderCards();
+};
+
+/* ---------- Hra ---------- */
+function nextCard(advance){
+  clearInterval(ticker);
+  var toast = "";
+  if(advance) game.turn = (game.turn % cfg.n) + 1;
+  cur = null;
+  if(game.pos < game.deck.length) cur = ALL[game.deck[game.pos]];
+  if(!cur){
+    game.deck = newDeck(cfg); game.pos = 0;
+    if(!game.deck.length){ game.deck = ALL.map(function(c,i){return i;}); }
+    cur = ALL[game.deck[0]];
+    toast = "Všetky karty prešli, miešam znova.";
+  }
+  curPlayer = game.turn;
+  game.pos++; game.round++;
+  phase = "back"; recIdx = -1; pendingTime = 0; runAcc = 0; segStart = 0; penMs = 0;
+  $("roundCount").textContent = "Karta " + game.round;
+  $("toast").textContent = toast;
+  save();
+  renderTurn();
+  setPhase(cfg.preview!==false ? "prep" : "back", true);
+  renderBoard();
+}
+
+function renderTurn(){
+  var g = game.turn, r = (g % cfg.n) + 1;
+  $("turnDot").textContent = g; $("turnDot").style.background = pcol(g);
+  $("turnLab").textContent = "Hádá " + noun();
+  $("readDot").textContent = r; $("readDot").style.background = pcol(r);
+  $("readLab").textContent = "Číta";
+}
+
+function showPeek(on){
+  if(on && cur){ $("peekText").textContent = cur.a; }
+  $("peek").classList.toggle("on", !!on);
+}
+
+function effTypes(c){
+  var wt = (cfg && cfg.types) ? cfg.types : TYPES.map(function(t){return t.id;});
+  var r = c.ty.filter(function(t){ return wt.indexOf(t)>-1; });
+  return r.length ? r : c.ty;
+}
+function tagPhon(c){ var e = effTypes(c); return e.length>1 ? TYPE_MIX_TAG : typeOf(e[0]).tag; }
+function tagHint(c){ var e = effTypes(c); return e.length>1 ? "Čo to znamená" : typeOf(e[0]).hintTag; }
+
+function hasHint(){ return cfg.hints && cur && cur.h; }
+
+function applyPhase(p){
+  var card = $("card");
+  card.className = "card c-" + p;
+  showPeek(false);
+  var main = $("main"), tag = $("tag"), sub = $("sub"), tm = $("tm");
+  var cc = cur ? CATS.filter(function(c){ return c.id===cur.c; })[0] : null;
+  $("cat").textContent = cc ? cc.name : "";
+  $("typ").textContent = cur ? effTypes(cur).map(function(id){ var t = typeOf(id); return t.icon + " " + t.name; }).join(" / ") : "";
+  $("lng").textContent = cur ? langLabel(cur.lg) : "";
+  main.className = "main"; sub.textContent = ""; tm.style.visibility = "hidden";
+  if(p==="back"){
+    tag.textContent = "Ťukni na kartu a otoč ju";
+    main.textContent = "?"; main.classList.add("q");
+  } else if(p==="prep"){
+    tag.textContent = "Len pre čitateľa";
+    main.textContent = "Pozri si odpoveď"; main.classList.add("long");
+    sub.textContent = "Podrž tlačidlo dole, potom stlač Štart";
+  } else if(p==="judge"){
+    tag.textContent = "Čas zastavený";
+    main.textContent = fmt((runAcc + penMs)/1000);
+    sub.textContent = "Čitateľ: otoč telefón k sebe a over odpoveď";
+  } else if(p==="hint"){
+    tag.textContent = tagHint(cur);
+    main.textContent = cur.h; main.classList.add("long");
+    if(cfg.hintTimer) tm.style.visibility = "visible";
+    else sub.textContent = "Ťukni na kartu pre frázu";
+  } else if(p==="phon"){
+    tag.textContent = tagPhon(cur);
+    main.textContent = cur.p;
+    if(cur.p.length>34) main.classList.add("long");
+    if(cfg.timer) tm.style.visibility = "visible";
+  } else if(p==="red"){
+    tag.textContent = "Neuhádnuté. Malo sa uhádnuť:";
+    main.textContent = cur.a;
+    sub.textContent = "„" + cur.p + "“";
+  } else if(p==="green"){
+    tag.textContent = "Správne! ✓";
+    main.textContent = cur.a;
+    sub.textContent = "Hádal " + noun() + " " + curPlayer + " · ⏱ " + fmt(pendingTime) + (penMs>0 ? " (z toho trest " + fmt(penMs/1000) + ")" : "");
+  }
+}
+
+function setPhase(p, animate){
+  phase = p; phaseStart = performance.now();
+  if(p==="phon") segStart = performance.now(); // čas beží len pri zobrazenej fráze
+  var card = $("card");
+  if(animate){
+    card.classList.add("flipping");
+    setTimeout(function(){
+      applyPhase(p);
+      if(p==="hint") updateTimer(cfg.t1, cfg.t1);
+      else updateTimer(cfg.t2 - runAcc/1000, cfg.t2);
+    }, 180);
+  } else {
+    applyPhase(p);
+  }
+  renderActions();
+}
+
+function updateTimer(rem, total){
+  $("num").textContent = Math.max(0, Math.ceil(rem));
+  $("bar").style.width = Math.max(0, Math.min(100, rem/total*100)) + "%";
+}
+
+function markMiss(){
+  game.results.push({p:curPlayer, time:null, card:cur.a});
+  recIdx = game.results.length-1;
+  save(); renderBoard();
+}
+
+function tick(){
+  var now = performance.now();
+  if(phase==="hint"){
+    if(cfg.hintTimer){
+      var rem = cfg.t1 - (now-phaseStart)/1000;
+      if(rem<=0) setPhase("phon", true); else updateTimer(rem, cfg.t1);
+    }
+  } else if(phase==="phon"){
+    if(cfg.timer){
+      var rem2 = cfg.t2 - (runAcc + (now-segStart))/1000;
+      if(rem2<=0){ runAcc = cfg.t2*1000; clearInterval(ticker); setPhase("red", true); markMiss(); }
+      else updateTimer(rem2, cfg.t2);
+    }
+  }
+}
+
+function startRound(){
+  setPhase(hasHint() ? "hint" : "phon", true);
+  clearInterval(ticker);
+  ticker = setInterval(tick, 100);
+}
+function onCard(){
+  if(phase==="back"){
+    if(cfg.preview!==false) setPhase("prep", true);
+    else startRound();
+  } else if(phase==="hint"){
+    setPhase("phon", true);
+  }
+}
+$("card").onclick = onCard;
+$("card").onkeydown = function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); onCard(); } };
+
+function stopRun(){ runAcc += performance.now() - segStart; }
+
+// niekto má tip: čas sa zastaví a fráza sa skryje
+function stopTip(){
+  if(phase!=="phon") return;
+  stopRun(); clearInterval(ticker);
+  setPhase("judge", true);
+}
+// zlý tip, háda sa ďalej: pripočíta sa trest a čas beží od miesta, kde zastal
+function wrongContinue(){
+  if(phase!=="judge") return;
+  penMs += (cfg.pen || 0)*1000;
+  setPhase("phon", true);
+  clearInterval(ticker);
+  ticker = setInterval(tick, 100);
+}
+
+function guessed(){
+  if(phase!=="judge" && phase!=="red") return;
+  pendingTime = (runAcc + penMs)/1000;
+  clearInterval(ticker);
+  var rec = {p:curPlayer, time:pendingTime, card:cur.a};
+  if(recIdx>-1) game.results[recIdx] = rec;
+  else { game.results.push(rec); recIdx = game.results.length-1; }
+  save();
+  setPhase("green", true);
+  renderBoard();
+}
+
+function giveUp(){
+  if(phase!=="phon" && phase!=="judge") return;
+  if(phase==="phon") stopRun();
+  clearInterval(ticker);
+  setPhase("red", true); markMiss();
+}
+function skipCard(){ clearInterval(ticker); nextCard(false); }
+function doneCard(){ nextCard(true); }
+
+function btn(cls, text, fn){
+  var b = document.createElement("button");
+  b.type="button"; b.className = "btn " + cls; b.textContent = text;
+  b.onclick = fn; return b;
+}
+
+// tlačidlo: kým je podržané, ukáže správnu odpoveď
+function holdBtn(){
+  var b = document.createElement("button");
+  b.type = "button"; b.className = "btn ghost hold";
+  b.textContent = "👁 Podrž pre odpoveď";
+  var on = function(e){
+    if(e && e.preventDefault) e.preventDefault();
+    try{ if(e && e.pointerId!==undefined) b.setPointerCapture(e.pointerId); }catch(x){}
+    b.classList.add("down"); showPeek(true);
+  };
+  var off = function(){ b.classList.remove("down"); showPeek(false); };
+  b.addEventListener("pointerdown", on);
+  ["pointerup","pointercancel","lostpointercapture","pointerleave","blur"].forEach(function(ev){
+    b.addEventListener(ev, off);
+  });
+  b.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+  b.addEventListener("keydown", function(e){ if((e.key===" "||e.key==="Enter") && !e.repeat){ on(e); } });
+  b.addEventListener("keyup", off);
+  return b;
+}
+
+function pair(a, b){
+  var d = document.createElement("div"); d.className = "pair";
+  d.appendChild(a); d.appendChild(b); return d;
+}
+
+function renderActions(){
+  var box = $("actions"); box.innerHTML = "";
+  if(phase==="back"){
+    var p = document.createElement("p"); p.className="hintline";
+    p.textContent = "Čas beží, len keď je vidieť frázu.";
+    box.appendChild(p);
+    box.appendChild(btn("ghost small","Preskočiť kartu", skipCard));
+  } else if(phase==="prep"){
+    box.appendChild(holdBtn());
+    box.appendChild(btn("primary","Štart", startRound));
+    box.appendChild(btn("ghost small","Preskočiť kartu", skipCard));
+  } else if(phase==="hint"){
+    box.appendChild(btn("primary","Ukázať frázu", function(){ setPhase("phon", true); }));
+    box.appendChild(btn("ghost small","Preskočiť kartu", skipCard));
+  } else if(phase==="phon"){
+    box.appendChild(btn("primary","✋ Stop, mám tip", stopTip));
+    box.appendChild(pair(btn("ghost small","Nikto neuhádol", giveUp), btn("ghost small","Preskočiť kartu", skipCard)));
+  } else if(phase==="judge"){
+    box.appendChild(holdBtn());
+    box.appendChild(btn("ok","✓ Správne", guessed));
+    var pen = cfg.pen || 0;
+    box.appendChild(btn("ghost","✗ Nesprávne, hádajte ďalej" + (pen>0 ? " (+" + pen + " s)" : ""), wrongContinue));
+    box.appendChild(btn("ghost small","✗ Nesprávne, koniec kola", giveUp));
+  } else if(phase==="red"){
+    box.appendChild(btn("ok","✓ Predsa len uhádli", guessed));
+    box.appendChild(btn("primary","Ďalšia karta", doneCard));
+  } else if(phase==="green"){
+    box.appendChild(btn("primary","Ďalšia karta", doneCard));
+  }
+}
+
+/* ---------- Štatistiky ---------- */
+function stats(){
+  var out = [];
+  for(var i=1;i<=cfg.n;i++){
+    var all = game.results.filter(function(r){return r.p===i;});
+    var t = all.filter(function(r){return r.time!==null;}).map(function(r){return r.time;});
+    var sum = t.reduce(function(a,b){return a+b;},0);
+    out.push({p:i, tries:all.length, count:t.length, best:t.length?Math.min.apply(null,t):null, avg:t.length?sum/t.length:null});
+  }
+  return out;
+}
+
+function renderBoard(){
+  var box = $("board"); box.innerHTML = "";
+  stats().forEach(function(s){
+    var d = document.createElement("div"); d.className = "pc" + (s.p===game.turn ? " now" : "");
+    d.innerHTML = '<div class="dot" style="background:' + pcol(s.p) + '">' + s.p + '</div>' +
+      '<span>✓ ' + s.count + ' z ' + s.tries + '</span><span>' + (s.best===null ? "–" : fmt(s.best)) + '</span>';
+    box.appendChild(d);
+  });
+}
+
+/* ---------- Výsledky ---------- */
+function renderResults(){
+  clearInterval(ticker);
+  var st = stats();
+  var tries = game.results.length;
+  var ok = game.results.filter(function(r){return r.time!==null;}).length;
+  $("resLead").textContent = tries
+    ? "Uhádnuté " + ok + " z " + tries + " pokusov."
+    : "Zatiaľ žiadny pokus. Vráť sa do hry.";
+  st.sort(function(a,b){
+    if(rankBy==="best"){
+      if(a.best===null && b.best===null) return a.p-b.p;
+      if(a.best===null) return 1; if(b.best===null) return -1;
+      return a.best-b.best || b.count-a.count;
+    }
+    if(b.count!==a.count) return b.count-a.count;
+    if(a.avg===null && b.avg===null) return a.p-b.p;
+    if(a.avg===null) return 1; if(b.avg===null) return -1;
+    return a.avg-b.avg;
+  });
+  var medals = ["🥇","🥈","🥉"];
+  var list = $("rankList"); list.innerHTML = "";
+  st.forEach(function(s,i){
+    var r = document.createElement("div"); r.className="rank";
+    var has = s.count>0;
+    var big = rankBy==="best" ? (has?fmt(s.best):"–") : (s.count + "×");
+    var small = has ? ("najlepší " + fmt(s.best) + ", priemer " + fmt(s.avg)) : "zatiaľ nič";
+    r.innerHTML = '<div class="pos">' + (has && i<3 ? medals[i] : (i+1)+".") + '</div>' +
+      '<div class="dot" style="background:' + pcol(s.p) + '">' + s.p + '</div>' +
+      '<div class="info"><b>' + (cfg.mode==="teams"?"Tím ":"Hráč ") + s.p + '</b><span>✓ ' + s.count + ' z ' + s.tries + ', ' + small + '</span></div>' +
+      '<div class="big">' + big + '</div>';
+    list.appendChild(r);
+  });
+  var log = $("log"); log.innerHTML = "";
+  if(!game.results.length){ log.innerHTML = '<div class="empty">Zatiaľ žiadne pokusy.</div>'; }
+  game.results.slice().reverse().forEach(function(r){
+    var d = document.createElement("div");
+    var a = document.createElement("span"); a.textContent = r.card;
+    var b = document.createElement("em"); b.textContent = r.p + " · " + (r.time===null ? "neuhádnuté" : fmt(r.time));
+    d.appendChild(a); d.appendChild(b); log.appendChild(d);
+  });
+  document.querySelectorAll("#rankSeg button").forEach(function(b){
+    b.classList.toggle("on", b.getAttribute("data-r")===rankBy);
+  });
+}
+document.querySelectorAll("#rankSeg button").forEach(function(b){
+  b.onclick = function(){ rankBy = b.getAttribute("data-r"); renderResults(); };
+});
+
+function openResults(){ if(!game) return; showPeek(false); renderResults(); show("results"); }
+$("scoreBtn").onclick = openResults;
+$("endBtn").onclick = openResults;
+$("backBtn").onclick = function(){
+  show("game");
+  if(phase==="hint"||phase==="phon"){
+    clearInterval(ticker); ticker = setInterval(tick, 100);
+  }
+};
+$("newBtn").onclick = function(){ clearInterval(ticker); show("setup"); renderSetup(); };
+
+/* ---------- Štart ---------- */
+loadCards();
+buildAll();
+var saved = load();
+if(saved && saved.settings){
+  var s = saved.settings;
+  settings.mode = s.mode==="solo" ? "solo" : "teams";
+  settings.n = s.n || 2; settings.t1 = s.t1 || 8; settings.t2 = s.t2 || 15;
+  settings.hintTimer = !!s.hintTimer;
+  settings.hints = s.hints!==false;
+  settings.timer = s.timer!==false;
+  settings.preview = s.preview!==false;
+  settings.pen = (typeof s.pen==="number") ? s.pen : 3;
+  settings.cats = (s.cats && s.cats.length) ? s.cats : settings.cats;
+  var known = s.known || ["film","osob","znac"];
+  if(s.seenHud) known = known.concat(["hud"]);
+  CATS.forEach(function(c){ if(known.indexOf(c.id)<0 && settings.cats.indexOf(c.id)<0) settings.cats.push(c.id); });
+  settings.known = CATS.map(function(c){return c.id;});
+  var kt = s.knownTypes || [];
+  settings.types = (s.types && s.types.length) ? s.types.slice() : [];
+  TYPES.forEach(function(t){ if(kt.indexOf(t.id)<0 && settings.types.indexOf(t.id)<0) settings.types.push(t.id); });
+  settings.types = settings.types.filter(function(id){ return !!typeOf(id); });
+  if(!settings.types.length) settings.types = TYPES.map(function(t){return t.id;});
+  settings.knownTypes = TYPES.map(function(t){return t.id;});
+  if(saved.game && saved.game.deck && saved.game.cfg){ game = saved.game; if(!game.turn) game.turn = 1; }
+}
+renderSetup();
+})();
+</script>
+</body>
+</html>
