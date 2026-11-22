@@ -212,6 +212,14 @@
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+  // keď sa nainštaluje nová verzia, načítaj stránku znova (nie počas rozohraného kola)
+  var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", function(){
+    if(!hadController || reloaded) return;
+    var g = document.getElementById("game");
+    if(g && !g.classList.contains("hidden")) return;
+    reloaded = true; location.reload();
+  });
 }
 </script>
 </body>

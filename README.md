@@ -51,4 +51,4 @@ Karta vyzerá takto:
 3. Pridaj `<script>` do `index.html` (pred `js/app.js`).
 4. Pridaj súbor do `ASSETS` v `sw.js` a zvýš `CACHE` (napr. `mtnj-v2`).
 
-Pri bežných úpravách existujúcich súborov netreba v `sw.js` nič meniť. Online sa vždy načíta čerstvá verzia a cache sa používa len offline.
+Pri bežných úpravách existujúcich súborov netreba v `sw.js` nič meniť. Online sa vždy načíta čerstvá verzia a cache sa používa len offline. Service worker obchádza HTTP cache prehliadača a po nasadení novej verzie sa stránka sama znova načíta, ale nie počas rozohraného kola.

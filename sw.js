@@ -1,8 +1,10 @@
 // Service worker: hra funguje aj offline.
 // Vlastné súbory: najprv sieť (s limitom), pri výpadku cache -> online vždy čerstvá verzia, bez ručného bumpovania.
 // Google Fonts: najprv cache.
+// Sieťové požiadavky idú s cache:"no-cache", aby HTTP cache prehliadača (GitHub Pages: max-age=600)
+// nevrátila starý JS k novému HTML.
 // CACHE zvýš len pri zmene zoznamu ASSETS (pridaný/odstránený súbor).
-var CACHE = "mtnj-v1";
+var CACHE = "mtnj-v2";
 var ASSETS = [
   "./",
   "index.html",
@@ -25,7 +27,7 @@ var ASSETS = [
 var NET_TIMEOUT = 3000;
 
 self.addEventListener("install", function(e){
-  e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(ASSETS); }).then(function(){ return self.skipWaiting(); }));
+  e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(ASSETS.map(function(u){ return new Request(u, {cache:"no-cache"}); })); }).then(function(){ return self.skipWaiting(); }));
 });
 
 self.addEventListener("activate", function(e){
@@ -36,7 +38,7 @@ self.addEventListener("activate", function(e){
 
 function networkFirst(req){
   return caches.open(CACHE).then(function(cache){
-    var net = fetch(req).then(function(res){
+    var net = fetch(req.url, {cache:"no-cache", credentials:"same-origin"}).then(function(res){
       if(res && res.ok) cache.put(req, res.clone());
       return res;
     });
