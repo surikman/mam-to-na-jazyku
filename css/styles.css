@@ -118,7 +118,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .card .main{font-size:clamp(34px,10.5vw,52px);font-weight:700;line-height:1.08;overflow-wrap:anywhere}
 .card .main.long{font-size:clamp(24px,7vw,32px);font-weight:600;line-height:1.2}
 .card .main.q{font-size:110px;opacity:.5}
-.card .sub{font-size:18px;opacity:.9}
+.card .sub{font-size:18px;opacity:.9;white-space:pre-line}
 .card .tm{width:100%;min-height:58px}
 .card .tm .num{font-size:30px;font-weight:700;line-height:1}
 .card .tm .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.28);margin-top:8px;overflow:hidden}

@@ -59,7 +59,7 @@ function patchCard(id, patch){
 }
 
 /* ---------- Stav ---------- */
-var settings = {mode:"teams", n:2, rounds:5, hints:true, hintTimer:false, t1:8, timer:true, t2:15, preview:true, pen:3, cats:["film","osob","znac","mies","hud","slov"], known:["film","osob","znac","mies","hud","slov"], types:["fon","pre","sla","opi","emo","rev","reb"], knownTypes:["fon","pre","sla","opi","emo","rev","reb"]};
+var settings = {mode:"teams", n:2, rounds:5, hints:true, hintTimer:false, t1:8, timer:false, t2:15, preview:true, pen:0, v:2, cats:["film","osob","znac","mies","hud","slov"], known:["film","osob","znac","mies","hud","slov"], types:["fon","pre","sla","opi","emo","rev","reb"], knownTypes:["fon","pre","sla","opi","emo","rev","reb"]};
 var game = null, cfg = null;
 var rankBy = "count";
 
@@ -485,7 +485,8 @@ function applyPhase(p){
   } else if(p==="judge"){
     tag.textContent = "Čas zastavený";
     main.textContent = fmt((runAcc + penMs)/1000);
-    sub.textContent = "Over odpoveď: podrž tlačidlo dole";
+    // fráza (a nápoveda) ostáva na očiach, aby sa dalo hádať ďalej
+    sub.textContent = "„" + cur.p + "“" + (hasHint() ? " · 💡 " + cur.h : "") + "\nOver odpoveď: podrž tlačidlo dole";
   } else if(p==="hint"){
     tag.textContent = tagHint(cur) + " · prečítaj nahlas";
     main.textContent = cur.h; main.classList.add("long");
@@ -495,6 +496,7 @@ function applyPhase(p){
     tag.textContent = tagPhon(cur);
     main.textContent = cur.p;
     if(cur.p.length>34) main.classList.add("long");
+    if(hasHint()) sub.textContent = "💡 " + cur.h; // nápoveda ostáva viditeľná aj počas hádania
     if(cfg.timer) tm.style.visibility = "visible";
   } else if(p==="red"){
     tag.textContent = "Neuhádnuté. Malo sa uhádnuť:";
@@ -797,9 +799,11 @@ if(saved && saved.settings){
   settings.rounds = (typeof s.rounds==="number") ? s.rounds : 5;
   settings.hintTimer = !!s.hintTimer;
   settings.hints = s.hints!==false;
-  settings.timer = s.timer!==false;
+  // v2: predvolene bez časomiery a bez trestu; staršie uložené nastavenia sa na to raz prepnú
+  var old = !s.v || s.v < 2;
+  settings.timer = old ? false : s.timer!==false;
   settings.preview = s.preview!==false;
-  settings.pen = (typeof s.pen==="number") ? s.pen : 3;
+  settings.pen = old ? 0 : ((typeof s.pen==="number") ? s.pen : 0);
   settings.cats = (s.cats && s.cats.length) ? s.cats : settings.cats;
   var known = s.known || ["film","osob","znac"];
   if(s.seenHud) known = known.concat(["hud"]);
