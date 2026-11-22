@@ -24,7 +24,8 @@
 <section id="setup">
   <h1>Mám to na jazyku!</h1>
   <p class="lead">Známe filmy, osobnosti, značky a miesta v prestrojení: zvukom, prekladom, emoji aj odzadu. Kto ich odhalí najrýchlejšie?</p>
-  <p class="rules">Jeden číta z telefónu, druhý hádá. Kto má tip, stlačí Stop. Čitateľ si podržaním tlačidla overí odpoveď. Po každej karte sa úlohy vymenia.</p>
+  <p class="rules">Hrá sa na jednom telefóne. Drží ho čitateľ, vždy z ďalšieho tímu (alebo ďalší hráč). Kartu prečíta nahlas a keď niekto zakričí tip, stlačí Stop a podržaním tlačidla overí odpoveď. Vyhráva, kto uhádne najviac kariet, pri zhode rýchlejší.</p>
+  <p class="tip hidden" id="installTip"><span>Tip: v Safari ťukni na Zdieľať → Pridať na plochu. Hra sa otvorí ako aplikácia a pôjde aj offline.</span><button type="button" id="tipClose" aria-label="Zavrieť tip">×</button></p>
 
   <div class="panel">
     <div class="row">
@@ -40,7 +41,16 @@
         <button type="button" data-d="-1" aria-label="Menej">−</button><output>2</output><button type="button" data-d="1" aria-label="Viac">+</button>
       </div>
     </div>
+    <div class="row">
+      <div class="lbl">Počet kôl<small id="roundsHelp">V každom kole háda každý tím raz</small></div>
+      <div class="step" data-key="rounds" data-min="0" data-max="30" data-inc="1">
+        <button type="button" data-d="-1" aria-label="Menej">−</button><output>5</output><button type="button" data-d="1" aria-label="Viac">+</button>
+      </div>
+    </div>
   </div>
+
+  <details class="more" id="more">
+  <summary><span class="lbl">Pravidlá a karty<small id="moreSum"></small></span></summary>
 
   <div class="panel">
     <div class="row">
@@ -53,8 +63,8 @@
     <div class="row" id="hintTimerRow">
       <div class="lbl">Odpočet nápovedy<small>Inak frázu ukážeš ťuknutím</small></div>
       <div class="seg" id="hintSeg">
-        <button data-v="0">Vypnutý</button>
         <button data-v="1">Zapnutý</button>
+        <button data-v="0">Vypnutý</button>
       </div>
     </div>
     <div class="row" id="t1row">
@@ -104,11 +114,14 @@
     <div class="chips" id="catChips"></div>
     <button class="btn ghost small" id="cardsBtn" style="margin-top:14px">Prehľad kariet</button>
   </div>
+  </details>
 
-  <p class="msg" id="startMsg"></p>
-  <div class="stack">
-    <button class="btn primary" id="startBtn">Začať hru</button>
-    <button class="btn ghost hidden" id="resumeBtn">Pokračovať v rozohranej hre</button>
+  <div class="bottombar">
+    <p class="msg" id="startMsg"></p>
+    <div class="stack">
+      <button class="btn primary" id="startBtn">Začať hru</button>
+      <button class="btn ghost hidden" id="resumeBtn">Pokračovať v rozohranej hre</button>
+    </div>
   </div>
 </section>
 
@@ -130,42 +143,41 @@
 <!-- HRA -->
 <section id="game" class="hidden">
   <div class="topbar">
-    <div class="count" id="roundCount">Karta 1</div>
+    <div class="count" id="roundCount">Kolo 1</div>
     <div class="btns">
       <button id="scoreBtn">Skóre</button>
-      <button id="endBtn">Koniec hry</button>
     </div>
   </div>
 
   <div class="turn" id="turn">
-    <div class="side"><div class="dot" id="turnDot">1</div><div class="lab" id="turnLab">Hádá</div></div>
-    <div class="side r"><div class="lab" id="readLab">Číta</div><div class="dot" id="readDot">2</div></div>
+    <div class="side"><div class="dot" id="turnDot">1</div><div class="lab"><small>Háda</small><span id="turnLab">Tím 1</span></div></div>
+    <div class="side r"><div class="lab"><small>Číta</small><span id="readLab">Tím 2</span></div><div class="dot" id="readDot">2</div></div>
   </div>
 
   <div class="stage">
-    <div class="card c-back" id="card" role="button" tabindex="0" aria-live="polite">
+    <div class="card c-back" id="card" role="button" tabindex="0">
       <div class="pills"><div class="cat" id="cat"></div><div class="cat" id="typ"></div><div class="cat" id="lng"></div></div>
-      <div class="tag" id="tag"></div>
-      <div class="mid"><div class="main" id="main"></div><div class="sub" id="sub"></div></div>
-      <div class="tm" id="tm"><div class="num" id="num"></div><div class="bar"><i id="bar"></i></div></div>
-      <div class="peek" id="peek"><small>Správna odpoveď</small><b id="peekText"></b></div>
+      <div class="tag" id="tag" aria-live="polite"></div>
+      <div class="mid"><div class="main" id="main" aria-live="polite"></div><div class="sub" id="sub"></div></div>
+      <div class="tm" id="tm" aria-hidden="true"><div class="num" id="num"></div><div class="bar"><i id="bar"></i></div></div>
+      <div class="peek" id="peek" aria-hidden="true"><small>Správna odpoveď</small><b id="peekText"></b></div>
     </div>
   </div>
-  <div id="actions" class="stack"></div>
+  <div id="actions" class="stack bottombar"></div>
   <div class="toast" id="toast"></div>
   <div class="board" id="board"></div>
 </section>
 
 <!-- VÝSLEDKY -->
 <section id="results" class="hidden">
-  <h1>Výsledky</h1>
+  <h1 id="resTitle">Skóre</h1>
   <p class="lead" id="resLead"></p>
   <div class="panel">
     <div class="row" style="margin-bottom:6px">
       <div class="lbl">Poradie podľa</div>
       <div class="seg" id="rankSeg">
-        <button data-r="best" class="on">Najlepší čas</button>
-        <button data-r="count">Počet</button>
+        <button data-r="count" class="on">Počet</button>
+        <button data-r="best">Najlepší čas</button>
       </div>
     </div>
     <div id="rankList"></div>

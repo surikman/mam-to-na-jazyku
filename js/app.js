@@ -59,14 +59,19 @@ function patchCard(id, patch){
 }
 
 /* ---------- Stav ---------- */
-var settings = {mode:"teams", n:2, hints:true, hintTimer:false, t1:8, timer:true, t2:15, preview:true, pen:3, cats:["film","osob","znac","mies","hud","slov"], known:["film","osob","znac","mies","hud","slov"], types:["fon","pre","sla","opi","emo","rev","reb"], knownTypes:["fon","pre","sla","opi","emo","rev","reb"]};
+var settings = {mode:"teams", n:2, rounds:5, hints:true, hintTimer:false, t1:8, timer:true, t2:15, preview:true, pen:3, cats:["film","osob","znac","mies","hud","slov"], known:["film","osob","znac","mies","hud","slov"], types:["fon","pre","sla","opi","emo","rev","reb"], knownTypes:["fon","pre","sla","opi","emo","rev","reb"]};
 var game = null, cfg = null;
-var rankBy = "best";
+var rankBy = "count";
 
 var cur = null, curPlayer = 1, phase = "back", phaseStart = 0, ticker = null;
 // čas hádania: runAcc = odbehnuté ms pri fráze, segStart = začiatok bežiaceho úseku, penMs = tresty
 var runAcc = 0, segStart = 0, penMs = 0;
 var pendingTime = 0, recIdx = -1;
+// pauza (obrazovka Skóre, zamknutý telefón, iná aplikácia)
+var paused = false, pausedAt = 0;
+// tlačidlá a karta nereagujú hneď po zmene fázy (proti omylom pri dvojťuknutí)
+var TAP_GUARD_MS = 400;
+function tooSoon(){ return performance.now() - phaseStart < TAP_GUARD_MS; }
 
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify({settings:settings, game:game})); }catch(e){}
@@ -77,8 +82,14 @@ function load(){
 
 /* ---------- Pomocné ---------- */
 function fmt(t){ return t.toFixed(1).replace(".", ",") + " s"; }
-function pcol(i){ return "hsl(" + Math.round(((i-1)*137.5) % 360) + " 55% 38%)"; }
+// pevná paleta: navzájom odlíšiteľné farby s dobrým kontrastom k bielemu číslu
+var PALETTE = ["#4b3fd1","#c62828","#1b7a43","#b35300","#8e24aa","#0b6e99","#ad1457","#6d4c41","#00796b","#455a64","#1a237e","#5f6b00"];
+function pcol(i){ return PALETTE[(i-1) % PALETTE.length]; }
 function noun(){ return cfg.mode==="teams" ? "tím" : "hráč"; }
+function who(i){ return (cfg.mode==="teams" ? "Tím " : "Hráč ") + i; }
+function readerOf(g){ return (g % cfg.n) + 1; }
+function totalTurns(){ return cfg.rounds ? cfg.rounds * cfg.n : 0; }
+function isLastTurn(){ var t = totalTurns(); return t>0 && game.results.length >= t; }
 function shuffle(a){
   for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
   return a;
@@ -93,14 +104,82 @@ function newDeck(c){
 function show(id){
   ["setup","cards","game","results"].forEach(function(s){ $(s).classList.toggle("hidden", s!==id); });
   window.scrollTo(0,0);
+  if(id==="game" || id==="results") keepAwake(); else letSleep();
 }
+
+/* ---------- Obrazovka nezhasne počas hry ---------- */
+var wakeLock = null;
+function keepAwake(){
+  try{
+    if(!("wakeLock" in navigator) || wakeLock || document.visibilityState!=="visible") return;
+    navigator.wakeLock.request("screen").then(function(l){
+      wakeLock = l; l.addEventListener("release", function(){ wakeLock = null; });
+    }).catch(function(){});
+  }catch(e){}
+}
+function letSleep(){ try{ if(wakeLock) wakeLock.release(); }catch(e){} wakeLock = null; }
+
+/* ---------- Zvuk a vibrácia pri vypršaní času ---------- */
+var audioCtx = null;
+function unlockAudio(){
+  try{
+    if(!audioCtx){ var AC = window.AudioContext || window.webkitAudioContext; if(AC) audioCtx = new AC(); }
+    if(audioCtx && audioCtx.state==="suspended") audioCtx.resume();
+  }catch(e){}
+}
+function timeUpSignal(){
+  try{ if(navigator.vibrate) navigator.vibrate([200,80,200]); }catch(e){}
+  try{
+    if(!audioCtx) return;
+    var t = audioCtx.currentTime, o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = "square"; o.frequency.setValueAtTime(660, t); o.frequency.setValueAtTime(440, t+0.18);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t+0.02); g.gain.exponentialRampToValueAtTime(0.0001, t+0.45);
+    o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t+0.5);
+  }catch(e){}
+}
+
+/* ---------- Pauza ---------- */
+function pauseClock(){
+  if(paused || !game) return;
+  paused = true; pausedAt = performance.now();
+  clearInterval(ticker);
+  if(phase==="phon") runAcc += pausedAt - segStart;
+}
+function resumeClock(){
+  if(!paused) return;
+  paused = false;
+  var now = performance.now();
+  if(phase==="phon") segStart = now;
+  else if(phase==="hint") phaseStart += now - pausedAt;
+  if(phase==="phon" || phase==="hint"){ clearInterval(ticker); ticker = setInterval(tick, 100); }
+}
+document.addEventListener("visibilitychange", function(){
+  var inGame = !$("game").classList.contains("hidden");
+  if(document.visibilityState==="hidden"){ if(inGame) pauseClock(); }
+  else {
+    if(inGame) resumeClock();
+    if(inGame || !$("results").classList.contains("hidden")) keepAwake();
+  }
+});
 function enabledCount(){ return ALL.filter(function(c){return !c.off;}).length; }
 
 /* ---------- Nastavenia ---------- */
 function setSeg(id, attr, value){
   document.querySelectorAll("#"+id+" button").forEach(function(b){
-    b.classList.toggle("on", b.getAttribute(attr)===value);
+    var on = b.getAttribute(attr)===value;
+    b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false");
   });
+}
+function moreSummary(){
+  var parts = [];
+  parts.push(settings.timer ? settings.t2 + " s na kartu" : "bez časomiery");
+  parts.push(settings.pen ? "trest " + settings.pen + " s" : "bez trestu");
+  parts.push(settings.hints ? "s nápovedou" : "bez nápovedy");
+  var n = ALL.filter(function(c){
+    return !c.off && settings.cats.indexOf(c.c)>-1 && c.ty.some(function(t){ return settings.types.indexOf(t)>-1; });
+  }).length;
+  parts.push(n + " kariet");
+  return parts.join(" · ");
 }
 function renderSetup(){
   setSeg("modeSeg","data-mode",settings.mode);
@@ -112,13 +191,18 @@ function renderSetup(){
   $("t1row").classList.toggle("hidden", !(settings.hints && settings.hintTimer));
   $("t2row").classList.toggle("hidden", !settings.timer);
   $("countLbl").textContent = settings.mode==="teams" ? "Počet tímov" : "Počet hráčov";
+  $("roundsHelp").textContent = settings.rounds
+    ? "V každom kole háda každý " + (settings.mode==="teams" ? "tím" : "hráč") + " raz"
+    : "Bez limitu, hrá sa, kým neukončíte";
   document.querySelectorAll(".step").forEach(function(s){
-    s.querySelector("output").textContent = settings[s.getAttribute("data-key")];
+    var k = s.getAttribute("data-key");
+    s.querySelector("output").textContent = (k==="rounds" && !settings.rounds) ? "∞" : settings[k];
   });
   var box = $("catChips"); box.innerHTML = "";
   CATS.forEach(function(c){
     var b = document.createElement("button");
     b.type="button"; b.className = "chip" + (settings.cats.indexOf(c.id)>-1 ? " on":"");
+    b.setAttribute("aria-pressed", settings.cats.indexOf(c.id)>-1 ? "true" : "false");
     b.textContent = c.name;
     b.onclick = function(){
       var i = settings.cats.indexOf(c.id);
@@ -132,6 +216,7 @@ function renderSetup(){
   TYPES.forEach(function(t){
     var b = document.createElement("button");
     b.type="button"; b.className = "chip" + (settings.types.indexOf(t.id)>-1 ? " on":"");
+    b.setAttribute("aria-pressed", settings.types.indexOf(t.id)>-1 ? "true" : "false");
     var n = ALL.filter(function(c){ return !c.off && c.ty.indexOf(t.id)>-1; }).length;
     b.textContent = t.icon + " " + t.name + " (" + n + ")";
     b.onclick = function(){
@@ -143,8 +228,10 @@ function renderSetup(){
     tbox.appendChild(b);
   });
   $("cardsBtn").textContent = "Prehľad kariet (" + enabledCount() + " zapnutých)";
+  $("moreSum").textContent = moreSummary();
   $("startMsg").textContent = "";
-  $("resumeBtn").classList.toggle("hidden", !(game && game.cfg && game.round>0));
+  $("resumeBtn").classList.toggle("hidden", !(game && game.cfg && game.round>0 && !game.over));
+  save(); // nastavenia sa pamätajú hneď, nielen po štarte hry
 }
 
 document.querySelectorAll("#modeSeg button").forEach(function(b){
@@ -175,7 +262,7 @@ $("startBtn").onclick = function(){
   var c = JSON.parse(JSON.stringify(settings));
   var deck = newDeck(c);
   if(!deck.length){ $("startMsg").textContent = "Zapni aspoň jednu kartu vo zvolených kategóriách a typoch."; return; }
-  game = {cfg:c, deck:deck, pos:0, round:0, turn:1, results:[]};
+  game = {cfg:c, deck:deck, pos:0, round:0, turn:1, results:[], over:false};
   cfg = game.cfg; cur = null;
   save(); show("game"); nextCard(false);
 };
@@ -219,7 +306,16 @@ function cardRow(card){
   cb.onchange = function(){ patchCard(card.id,{off:!cb.checked}); renderCards(); };
   var t = document.createElement("div"); t.className="txt";
   var b = document.createElement("b"); b.textContent = card.p;
-  var an = document.createElement("span"); an.className="ans"; an.textContent = card.a + "  " + card.ty.map(function(id){ return typeOf(id).icon; }).join("") + " " + (card.lg==="sk" ? "🇸🇰" : "🌍");
+  // odpoveď je rozmazaná, kým na ňu neťukneš (nech ju nevidí niekto cez plece)
+  var an = document.createElement("span"); an.className="ans spoiler";
+  an.setAttribute("role","button"); an.tabIndex = 0;
+  an.setAttribute("aria-label","Ukázať odpoveď");
+  var aa = document.createElement("span"); aa.className = "a"; aa.textContent = card.a;
+  an.appendChild(aa);
+  an.appendChild(document.createTextNode("  " + card.ty.map(function(id){ return typeOf(id).icon; }).join("") + " " + (card.lg==="sk" ? "🇸🇰" : "🌍")));
+  var reveal = function(){ an.classList.toggle("spoiler"); an.setAttribute("aria-label", an.classList.contains("spoiler") ? "Ukázať odpoveď" : card.a); };
+  an.onclick = reveal;
+  an.onkeydown = function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); reveal(); } };
   var hh = document.createElement("small"); hh.textContent = card.h || "(bez nápovedy)";
   t.appendChild(b); t.appendChild(an); t.appendChild(hh);
   var ed = document.createElement("button"); ed.type="button"; ed.className="ed"; ed.textContent="Upraviť";
@@ -249,9 +345,9 @@ function editForm(card){
   tw.appendChild(tlab);
   var tcs = [];
   TYPES.forEach(function(t){
-    var l = document.createElement("label");
-    l.style.cssText = "display:flex;align-items:center;gap:8px;flex-direction:row;color:var(--fg);font-size:14px";
-    var cb = document.createElement("input"); cb.type = "checkbox"; cb.style.width = "auto";
+    var l = document.createElement("label"); l.className = "tyc";
+    l.style.cssText = "display:flex;align-items:center;gap:10px;flex-direction:row;color:var(--fg);font-size:15px";
+    var cb = document.createElement("input"); cb.type = "checkbox";
     cb.checked = card ? card.ty.indexOf(t.id)>-1 : t.id==="fon";
     tcs.push({id:t.id, cb:cb});
     l.appendChild(cb); l.appendChild(document.createTextNode(t.icon + " " + t.name));
@@ -333,8 +429,10 @@ function nextCard(advance){
   }
   curPlayer = game.turn;
   game.pos++; game.round++;
-  phase = "back"; recIdx = -1; pendingTime = 0; runAcc = 0; segStart = 0; penMs = 0;
-  $("roundCount").textContent = "Karta " + game.round;
+  phase = "back"; recIdx = -1; pendingTime = 0; runAcc = 0; segStart = 0; penMs = 0; paused = false;
+  // kolo = každý tím/hráč raz hádal; počíta sa podľa zapísaných pokusov (preskočené karty sa nerátajú)
+  var k = Math.floor(game.results.length / cfg.n) + 1;
+  $("roundCount").textContent = cfg.rounds ? "Kolo " + Math.min(k, cfg.rounds) + " z " + cfg.rounds : "Kolo " + k;
   $("toast").textContent = toast;
   save();
   renderTurn();
@@ -343,11 +441,11 @@ function nextCard(advance){
 }
 
 function renderTurn(){
-  var g = game.turn, r = (g % cfg.n) + 1;
+  var g = game.turn, r = readerOf(g);
   $("turnDot").textContent = g; $("turnDot").style.background = pcol(g);
-  $("turnLab").textContent = "Hádá " + noun();
+  $("turnLab").textContent = who(g);
   $("readDot").textContent = r; $("readDot").style.background = pcol(r);
-  $("readLab").textContent = "Číta";
+  $("readLab").textContent = who(r);
 }
 
 function showPeek(on){
@@ -375,19 +473,21 @@ function applyPhase(p){
   $("typ").textContent = cur ? effTypes(cur).map(function(id){ var t = typeOf(id); return t.icon + " " + t.name; }).join(" / ") : "";
   $("lng").textContent = cur ? langLabel(cur.lg) : "";
   main.className = "main"; sub.textContent = ""; tm.style.visibility = "hidden";
+  var g = game ? game.turn : 1, r = cfg ? readerOf(g) : 2;
   if(p==="back"){
-    tag.textContent = "Ťukni na kartu a otoč ju";
+    tag.textContent = "Podaj telefón: číta " + who(r);
     main.textContent = "?"; main.classList.add("q");
+    sub.textContent = "Háda " + who(g) + ". Ťukni na kartu a otoč ju.";
   } else if(p==="prep"){
     tag.textContent = "Len pre čitateľa";
-    main.textContent = "Pozri si odpoveď"; main.classList.add("long");
-    sub.textContent = "Podrž tlačidlo dole, potom stlač Štart";
+    main.textContent = "Podaj telefón: číta " + who(r); main.classList.add("long");
+    sub.textContent = "Háda " + who(g) + ". Podrž tlačidlo s odpoveďou, potom stlač Štart.";
   } else if(p==="judge"){
     tag.textContent = "Čas zastavený";
     main.textContent = fmt((runAcc + penMs)/1000);
-    sub.textContent = "Čitateľ: otoč telefón k sebe a over odpoveď";
+    sub.textContent = "Over odpoveď: podrž tlačidlo dole";
   } else if(p==="hint"){
-    tag.textContent = tagHint(cur);
+    tag.textContent = tagHint(cur) + " · prečítaj nahlas";
     main.textContent = cur.h; main.classList.add("long");
     if(cfg.hintTimer) tm.style.visibility = "visible";
     else sub.textContent = "Ťukni na kartu pre frázu";
@@ -403,7 +503,7 @@ function applyPhase(p){
   } else if(p==="green"){
     tag.textContent = "Správne! ✓";
     main.textContent = cur.a;
-    sub.textContent = "Hádal " + noun() + " " + curPlayer + " · ⏱ " + fmt(pendingTime) + (penMs>0 ? " (z toho trest " + fmt(penMs/1000) + ")" : "");
+    sub.textContent = who(curPlayer) + " · ⏱ " + fmt(pendingTime) + (penMs>0 ? " (z toho trest " + fmt(penMs/1000) + ")" : "");
   }
 }
 
@@ -445,18 +545,20 @@ function tick(){
   } else if(phase==="phon"){
     if(cfg.timer){
       var rem2 = cfg.t2 - (runAcc + (now-segStart))/1000;
-      if(rem2<=0){ runAcc = cfg.t2*1000; clearInterval(ticker); setPhase("red", true); markMiss(); }
+      if(rem2<=0){ runAcc = cfg.t2*1000; clearInterval(ticker); markMiss(); setPhase("red", true); timeUpSignal(); }
       else updateTimer(rem2, cfg.t2);
     }
   }
 }
 
 function startRound(){
+  unlockAudio(); // zvuk musí odomknúť ťuknutie používateľa
   setPhase(hasHint() ? "hint" : "phon", true);
   clearInterval(ticker);
   ticker = setInterval(tick, 100);
 }
 function onCard(){
+  if(tooSoon()) return;
   if(phase==="back"){
     if(cfg.preview!==false) setPhase("prep", true);
     else startRound();
@@ -500,15 +602,24 @@ function giveUp(){
   if(phase!=="phon" && phase!=="judge") return;
   if(phase==="phon") stopRun();
   clearInterval(ticker);
-  setPhase("red", true); markMiss();
+  markMiss(); setPhase("red", true);
 }
 function skipCard(){ clearInterval(ticker); nextCard(false); }
-function doneCard(){ nextCard(true); }
+function doneCard(){
+  if(isLastTurn()){
+    clearInterval(ticker);
+    game.over = true; save();
+    openResults();
+    return;
+  }
+  nextCard(true);
+}
 
 function btn(cls, text, fn){
   var b = document.createElement("button");
   b.type="button"; b.className = "btn " + cls; b.textContent = text;
-  b.onclick = fn; return b;
+  b.onclick = function(e){ if(tooSoon()) return; fn(e); };
+  return b;
 }
 
 // tlačidlo: kým je podržané, ukáže správnu odpoveď
@@ -549,22 +660,23 @@ function renderActions(){
     box.appendChild(btn("primary","Štart", startRound));
     box.appendChild(btn("ghost small","Preskočiť kartu", skipCard));
   } else if(phase==="hint"){
+    // po štarte sa už preskočiť nedá, len vzdať (zapíše sa ako neuhádnuté)
     box.appendChild(btn("primary","Ukázať frázu", function(){ setPhase("phon", true); }));
-    box.appendChild(btn("ghost small","Preskočiť kartu", skipCard));
   } else if(phase==="phon"){
     box.appendChild(btn("primary","✋ Stop, mám tip", stopTip));
-    box.appendChild(pair(btn("ghost small","Nikto neuhádol", giveUp), btn("ghost small","Preskočiť kartu", skipCard)));
+    box.appendChild(btn("ghost small","Vzdávame sa", giveUp));
   } else if(phase==="judge"){
     box.appendChild(holdBtn());
     box.appendChild(btn("ok","✓ Správne", guessed));
     var pen = cfg.pen || 0;
-    box.appendChild(btn("ghost","✗ Nesprávne, hádajte ďalej" + (pen>0 ? " (+" + pen + " s)" : ""), wrongContinue));
-    box.appendChild(btn("ghost small","✗ Nesprávne, koniec kola", giveUp));
+    box.appendChild(pair(
+      btn("ghost small","✗ Zle, hádajte ďalej" + (pen>0 ? " (+" + pen + " s)" : ""), wrongContinue),
+      btn("ghost small","✗ Zle, vzdávame sa", giveUp)));
   } else if(phase==="red"){
-    box.appendChild(btn("ok","✓ Predsa len uhádli", guessed));
-    box.appendChild(btn("primary","Ďalšia karta", doneCard));
+    box.appendChild(btn("primary", isLastTurn() ? "Výsledky hry" : "Ďalšia karta", doneCard));
+    box.appendChild(btn("ghost small","✓ Predsa len uhádli", guessed));
   } else if(phase==="green"){
-    box.appendChild(btn("primary","Ďalšia karta", doneCard));
+    box.appendChild(btn("primary", isLastTurn() ? "Výsledky hry" : "Ďalšia karta", doneCard));
   }
 }
 
@@ -585,7 +697,9 @@ function renderBoard(){
   stats().forEach(function(s){
     var d = document.createElement("div"); d.className = "pc" + (s.p===game.turn ? " now" : "");
     d.innerHTML = '<div class="dot" style="background:' + pcol(s.p) + '">' + s.p + '</div>' +
-      '<span>✓ ' + s.count + ' z ' + s.tries + '</span><span>' + (s.best===null ? "–" : fmt(s.best)) + '</span>';
+      (s.tries ? '<span>✓ ' + s.count + ' z ' + s.tries + '</span><span>' + (s.avg===null ? "–" : "⌀ " + fmt(s.avg)) + '</span>'
+               : '<span>zatiaľ</span><span>nehádal</span>');
+    d.setAttribute("aria-label", who(s.p) + ": uhádnuté " + s.count + " z " + s.tries);
     box.appendChild(d);
   });
 }
@@ -596,59 +710,81 @@ function renderResults(){
   var st = stats();
   var tries = game.results.length;
   var ok = game.results.filter(function(r){return r.time!==null;}).length;
-  $("resLead").textContent = tries
-    ? "Uhádnuté " + ok + " z " + tries + " pokusov."
-    : "Zatiaľ žiadny pokus. Vráť sa do hry.";
+  // víťaz: najviac uhádnutých, pri zhode lepší priemerný čas
+  var byCount = function(a,b){
+    if(b.count!==a.count) return b.count-a.count;
+    if(a.avg===null && b.avg===null) return a.p-b.p;
+    if(a.avg===null) return 1; if(b.avg===null) return -1;
+    return a.avg-b.avg;
+  };
+  var lead = tries ? "Uhádnuté karty: " + ok + " z " + tries + "." : "Zatiaľ nikto nehádal. Vráť sa do hry.";
+  if(game.over && ok){
+    var top = st.slice().sort(byCount);
+    var wins = top.filter(function(s){ return s.count===top[0].count && s.avg===top[0].avg; });
+    lead = (wins.length>1 ? "🤝 Remíza: " + wins.map(function(s){ return who(s.p); }).join(" a ")
+                           : "🏆 Vyhráva " + who(top[0].p)) + ". " + lead;
+  }
+  $("resTitle").textContent = game.over ? "Koniec hry" : "Skóre";
+  $("resLead").textContent = lead;
+  $("backBtn").classList.toggle("hidden", !!game.over);
+  $("newBtn").className = "btn " + (game.over ? "primary" : "ghost");
   st.sort(function(a,b){
     if(rankBy==="best"){
       if(a.best===null && b.best===null) return a.p-b.p;
       if(a.best===null) return 1; if(b.best===null) return -1;
       return a.best-b.best || b.count-a.count;
     }
-    if(b.count!==a.count) return b.count-a.count;
-    if(a.avg===null && b.avg===null) return a.p-b.p;
-    if(a.avg===null) return 1; if(b.avg===null) return -1;
-    return a.avg-b.avg;
+    return byCount(a,b);
   });
   var medals = ["🥇","🥈","🥉"];
   var list = $("rankList"); list.innerHTML = "";
   st.forEach(function(s,i){
     var r = document.createElement("div"); r.className="rank";
     var has = s.count>0;
-    var big = rankBy==="best" ? (has?fmt(s.best):"–") : (s.count + "×");
-    var small = has ? ("najlepší " + fmt(s.best) + ", priemer " + fmt(s.avg)) : "zatiaľ nič";
+    var big = rankBy==="best" ? (has?fmt(s.best):"–") : ("✓ " + s.count);
+    var small = !s.tries ? "zatiaľ nehádal" :
+      ("uhádnuté " + s.count + " z " + s.tries + (has ? ", priemer " + fmt(s.avg) + ", najlepší " + fmt(s.best) : ""));
     r.innerHTML = '<div class="pos">' + (has && i<3 ? medals[i] : (i+1)+".") + '</div>' +
       '<div class="dot" style="background:' + pcol(s.p) + '">' + s.p + '</div>' +
-      '<div class="info"><b>' + (cfg.mode==="teams"?"Tím ":"Hráč ") + s.p + '</b><span>✓ ' + s.count + ' z ' + s.tries + ', ' + small + '</span></div>' +
+      '<div class="info"><b>' + who(s.p) + '</b><span>' + small + '</span></div>' +
       '<div class="big">' + big + '</div>';
     list.appendChild(r);
   });
   var log = $("log"); log.innerHTML = "";
-  if(!game.results.length){ log.innerHTML = '<div class="empty">Zatiaľ žiadne pokusy.</div>'; }
+  if(!game.results.length){ log.innerHTML = '<div class="empty">Zatiaľ žiadne karty.</div>'; }
   game.results.slice().reverse().forEach(function(r){
     var d = document.createElement("div");
     var a = document.createElement("span"); a.textContent = r.card;
-    var b = document.createElement("em"); b.textContent = r.p + " · " + (r.time===null ? "neuhádnuté" : fmt(r.time));
+    var b = document.createElement("em"); b.textContent = who(r.p) + " · " + (r.time===null ? "neuhádnuté" : fmt(r.time));
     d.appendChild(a); d.appendChild(b); log.appendChild(d);
   });
-  document.querySelectorAll("#rankSeg button").forEach(function(b){
-    b.classList.toggle("on", b.getAttribute("data-r")===rankBy);
-  });
+  setSeg("rankSeg","data-r",rankBy);
 }
 document.querySelectorAll("#rankSeg button").forEach(function(b){
   b.onclick = function(){ rankBy = b.getAttribute("data-r"); renderResults(); };
 });
 
-function openResults(){ if(!game) return; showPeek(false); renderResults(); show("results"); }
+function openResults(){ if(!game) return; pauseClock(); showPeek(false); renderResults(); show("results"); }
 $("scoreBtn").onclick = openResults;
-$("endBtn").onclick = openResults;
 $("backBtn").onclick = function(){
   show("game");
-  if(phase==="hint"||phase==="phon"){
-    clearInterval(ticker); ticker = setInterval(tick, 100);
-  }
+  resumeClock();
 };
-$("newBtn").onclick = function(){ clearInterval(ticker); show("setup"); renderSetup(); };
+$("newBtn").onclick = function(){ clearInterval(ticker); paused = false; show("setup"); renderSetup(); };
+
+/* ---------- Tip na inštaláciu (iPhone/iPad v Safari) ---------- */
+(function(){
+  var TIP_KEY = "mam-to-na-jazyku-install-tip";
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+  var standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  var dismissed = false;
+  try{ dismissed = localStorage.getItem(TIP_KEY)==="1"; }catch(e){}
+  if(ios && !standalone && !dismissed) $("installTip").classList.remove("hidden");
+  $("tipClose").onclick = function(){
+    $("installTip").classList.add("hidden");
+    try{ localStorage.setItem(TIP_KEY, "1"); }catch(e){}
+  };
+})();
 
 /* ---------- Štart ---------- */
 loadCards();
@@ -658,6 +794,7 @@ if(saved && saved.settings){
   var s = saved.settings;
   settings.mode = s.mode==="solo" ? "solo" : "teams";
   settings.n = s.n || 2; settings.t1 = s.t1 || 8; settings.t2 = s.t2 || 15;
+  settings.rounds = (typeof s.rounds==="number") ? s.rounds : 5;
   settings.hintTimer = !!s.hintTimer;
   settings.hints = s.hints!==false;
   settings.timer = s.timer!==false;
