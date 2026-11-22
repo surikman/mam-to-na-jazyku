@@ -59,7 +59,7 @@ function patchCard(id, patch){
 }
 
 /* ---------- Stav ---------- */
-var settings = {mode:"teams", n:2, rounds:5, hints:true, hintTimer:false, t1:8, timer:false, t2:15, preview:true, pen:0, v:2, cats:["film","osob","znac","mies","hud","slov"], known:["film","osob","znac","mies","hud","slov"], types:["fon","pre","sla","opi","emo","rev","reb"], knownTypes:["fon","pre","sla","opi","emo","rev","reb"]};
+var settings = {mode:"teams", n:2, rounds:5, hints:true, hintTimer:false, t1:8, timer:false, t2:15, preview:true, pen:0, v:2, names:{teams:[], solo:[]}, cats:["film","osob","znac","mies","hud","slov"], known:["film","osob","znac","mies","hud","slov"], types:["fon","pre","sla","opi","emo","rev","reb"], knownTypes:["fon","pre","sla","opi","emo","rev","reb"]};
 var game = null, cfg = null;
 var rankBy = "count";
 
@@ -86,7 +86,10 @@ function fmt(t){ return t.toFixed(1).replace(".", ",") + " s"; }
 var PALETTE = ["#4b3fd1","#c62828","#1b7a43","#b35300","#8e24aa","#0b6e99","#ad1457","#6d4c41","#00796b","#455a64","#1a237e","#5f6b00"];
 function pcol(i){ return PALETTE[(i-1) % PALETTE.length]; }
 function noun(){ return cfg.mode==="teams" ? "tím" : "hráč"; }
-function who(i){ return (cfg.mode==="teams" ? "Tím " : "Hráč ") + i; }
+function defName(mode, i){ return (mode==="teams" ? "Tím " : "Hráč ") + i; }
+function nameOf(c, i){ var l = c.names && c.names[c.mode]; var n = l && l[i-1]; return (n && n.trim()) || defName(c.mode, i); }
+function who(i){ return nameOf(cfg, i); }
+function esc(t){ return String(t).replace(/[&<>"']/g, function(ch){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]; }); }
 function readerOf(g){ return (g % cfg.n) + 1; }
 function totalTurns(){ return cfg.rounds ? cfg.rounds * cfg.n : 0; }
 function isLastTurn(){ var t = totalTurns(); return t>0 && game.results.length >= t; }
@@ -181,7 +184,28 @@ function moreSummary(){
   parts.push(n + " kariet");
   return parts.join(" · ");
 }
+// políčka s menami sa prekreslia len pri zmene režimu/počtu (aby sa pri písaní nestratil fokus)
+var namesSig = "";
+function renderNames(){
+  var sig = settings.mode + ":" + settings.n;
+  if(sig===namesSig) return; namesSig = sig;
+  var teams = settings.mode==="teams";
+  $("namesLbl").firstChild.textContent = teams ? "Mená tímov" : "Mená hráčov";
+  var list = settings.names[settings.mode] = settings.names[settings.mode] || [];
+  var box = $("names"); box.innerHTML = "";
+  for(var i=1;i<=settings.n;i++){ (function(i){
+    var l = document.createElement("label");
+    var dot = document.createElement("div"); dot.className = "dot"; dot.style.background = pcol(i); dot.textContent = i;
+    var inp = document.createElement("input"); inp.type = "text"; inp.maxLength = 20;
+    inp.placeholder = defName(settings.mode, i); inp.value = list[i-1] || "";
+    inp.setAttribute("aria-label", "Meno: " + defName(settings.mode, i));
+    inp.autocomplete = "off"; inp.setAttribute("autocapitalize", "words");
+    inp.oninput = function(){ list[i-1] = inp.value; save(); };
+    l.appendChild(dot); l.appendChild(inp); box.appendChild(l);
+  })(i); }
+}
 function renderSetup(){
+  renderNames();
   setSeg("modeSeg","data-mode",settings.mode);
   setSeg("hintsSeg","data-v",settings.hints?"1":"0");
   setSeg("hintSeg","data-v",settings.hintTimer?"1":"0");
@@ -268,6 +292,8 @@ $("startBtn").onclick = function(){
 };
 $("resumeBtn").onclick = function(){
   cfg = game.cfg;
+  // mená upravené v nastaveniach platia aj pre rozohranú hru
+  cfg.names = JSON.parse(JSON.stringify(settings.names));
   if(cfg.hints===undefined) cfg.hints = true;
   if(cfg.timer===undefined) cfg.timer = true;
   cur = null;
@@ -699,6 +725,7 @@ function renderBoard(){
   stats().forEach(function(s){
     var d = document.createElement("div"); d.className = "pc" + (s.p===game.turn ? " now" : "");
     d.innerHTML = '<div class="dot" style="background:' + pcol(s.p) + '">' + s.p + '</div>' +
+      '<b class="nm">' + esc(who(s.p)) + '</b>' +
       (s.tries ? '<span>✓ ' + s.count + ' z ' + s.tries + '</span><span>' + (s.avg===null ? "–" : "⌀ " + fmt(s.avg)) + '</span>'
                : '<span>zatiaľ</span><span>nehádal</span>');
     d.setAttribute("aria-label", who(s.p) + ": uhádnuté " + s.count + " z " + s.tries);
@@ -748,7 +775,7 @@ function renderResults(){
       ("uhádnuté " + s.count + " z " + s.tries + (has ? ", priemer " + fmt(s.avg) + ", najlepší " + fmt(s.best) : ""));
     r.innerHTML = '<div class="pos">' + (has && i<3 ? medals[i] : (i+1)+".") + '</div>' +
       '<div class="dot" style="background:' + pcol(s.p) + '">' + s.p + '</div>' +
-      '<div class="info"><b>' + who(s.p) + '</b><span>' + small + '</span></div>' +
+      '<div class="info"><b>' + esc(who(s.p)) + '</b><span>' + small + '</span></div>' +
       '<div class="big">' + big + '</div>';
     list.appendChild(r);
   });
@@ -797,6 +824,7 @@ if(saved && saved.settings){
   settings.mode = s.mode==="solo" ? "solo" : "teams";
   settings.n = s.n || 2; settings.t1 = s.t1 || 8; settings.t2 = s.t2 || 15;
   settings.rounds = (typeof s.rounds==="number") ? s.rounds : 5;
+  if(s.names && typeof s.names==="object") settings.names = {teams:(s.names.teams||[]).slice(0,12), solo:(s.names.solo||[]).slice(0,12)};
   settings.hintTimer = !!s.hintTimer;
   settings.hints = s.hints!==false;
   // v2: predvolene bez časomiery a bez trestu; staršie uložené nastavenia sa na to raz prepnú

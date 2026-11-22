@@ -90,6 +90,14 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .turn .side .lab{font-size:20px;font-weight:700;line-height:1.1}
 .turn .side .lab small{display:block;font-size:13px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .turn .side.r{text-align:right}
+.turn .side{flex:1 1 0;min-width:0}
+.turn .side.r{justify-content:flex-end}
+.turn .side .lab{min-width:0}
+.turn .side .lab span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.names{display:grid;gap:8px;margin-top:10px}
+.names label{display:flex;align-items:center;gap:10px}
+.names input{flex:1;min-width:0;font:inherit;padding:10px 12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--fg)}
+.names .dot{width:34px;height:34px;font-size:17px}
 
 .stage{perspective:1200px;margin-bottom:4px}
 .card{
@@ -134,6 +142,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .pc{flex:0 0 auto;min-width:82px;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:8px 10px;text-align:center}
 .pc.now{border-color:var(--accent)}
 .pc .dot{width:30px;height:30px;font-size:16px;margin:0 auto 4px}
+.pc .nm{display:block;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
 .pc span{display:block;font-size:13px;color:var(--muted)}
 .hintline{text-align:center;color:var(--muted);margin:0 0 4px;font-size:15px}
 .toast{text-align:center;color:var(--muted);font-size:14px;min-height:20px}
